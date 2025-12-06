@@ -1,0 +1,73 @@
+import React from 'react';
+
+function DesignControls({ formData, setFormData }) {
+  const handleChange = (field, value) => {
+    setFormData({ ...formData, [field]: value });
+  };
+
+  const ratios = ['1:1', '9:16', '1.91:1'];
+
+  return (
+    <div>
+      <div className="mb-4">
+        <label className="form-label fw-semibold">Format</label>
+        <div className="btn-group w-100" role="group">
+          {ratios.map((ratio) => (
+            <button
+              key={ratio}
+              type="button"
+              className={`btn ${formData.ratio === ratio ? 'btn-primary' : 'btn-outline-primary'}`}
+              onClick={() => handleChange('ratio', ratio)}
+            >
+              {ratio}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="mb-3">
+        <label className="form-label fw-semibold">Brand Colors</label>
+        <div className="row g-2">
+          <div className="col-6">
+            <label className="form-label small">Primary</label>
+            <input
+              type="color"
+              className="form-control color-input"
+              value={formData.primaryColor}
+              onChange={(e) => handleChange('primaryColor', e.target.value)}
+            />
+          </div>
+          <div className="col-6">
+            <label className="form-label small">Secondary</label>
+            <input
+              type="color"
+              className="form-control color-input"
+              value={formData.secondaryColor}
+              onChange={(e) => handleChange('secondaryColor', e.target.value)}
+            />
+          </div>
+          <div className="col-6">
+            <label className="form-label small">Accent</label>
+            <input
+              type="color"
+              className="form-control color-input"
+              value={formData.accentColor}
+              onChange={(e) => handleChange('accentColor', e.target.value)}
+            />
+          </div>
+          <div className="col-6">
+            <label className="form-label small">Background</label>
+            <input
+              type="color"
+              className="form-control color-input"
+              value={formData.bgColor}
+              onChange={(e) => handleChange('bgColor', e.target.value)}
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default DesignControls;
