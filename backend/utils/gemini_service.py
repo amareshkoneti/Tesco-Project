@@ -11,7 +11,7 @@ class GeminiService:
         self.api_key = api_key
         if api_key:
             genai.configure(api_key=api_key)
-            self.model = genai.GenerativeModel('gemini-2.5-flash-lite')
+            self.model = genai.GenerativeModel('gemma-3-27b-it')
         else:
             self.model = None
     
@@ -82,6 +82,7 @@ Be concise and return only the JSON."""
 CRITICAL REQUIREMENTS: - Canvas MUST be EXACTLY {w}px × {h}px (use width:{w}px; height:{h}px;) - No element should overlap. 
 Maintain at least 40px spacing between elements. - Maintain a safe zone of 5% around all edges. 
 - Respect aspect ratio (portrait / landscape / square) and adjust layout automatically. 
+- Product image must be sized large or small and positioned according to best practices for ratio.
 CONTENT:
 - Product: {image_url} 
 - Logo: {logo_url if has_logo else 'none'} 
@@ -101,8 +102,6 @@ DESIGN RULES:
 - Price badge can be of any shape but must be eye-catching. 
 - Price badge adjusts automatically to canvas ratio 
 - Product image should be large according to layout, centered, and NEVER overlap with text or badges 
-- Price badge must NOT overlap with product image and must be left side of the canvas (on left half either bottom-left or middle-left) 
-- Offer badge must NOT overlap with product image and must be rigt side of the canvas (on right half either bottom-right or middle-right) 
 - Text must be bold, large, high contrast - Use Google Fonts (Impact, Bebas Neue, Oswald, Montserrat) 
 - Add creative shapes but ensure they don't cover text or product 
 - No elements should overlap each other either text or images check twice before finalizing 

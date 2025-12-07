@@ -37,7 +37,7 @@ os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 # Initialize services
 image_processor = ImageProcessor()
-gemini_service = GeminiService("")
+gemini_service = GeminiService("AIzaSyAJn7VYCMuDSZIeJpOzQSjMnzvXG-5xtWk")
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -240,6 +240,7 @@ def generate_layout():
         print("Background filename:", background_image_filename)        # ← debug
         print("Background URL:", background_image_url)                  # ← should now show real URL
         # Canvas sizes
+        print("Generating layout with ratio:", ratio)
         canvas = {'width': 1080, 'height': 1080} if ratio == '1:1' else {'width': 1080, 'height': 1920} if ratio == '9:16' else {'width': 1200, 'height': 628}
 
         result = gemini_service.generate_layout(
