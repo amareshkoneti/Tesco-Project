@@ -1,6 +1,7 @@
 import React from 'react';
+import ImageUpload from './ImageUpload';
 
-function DesignControls({ formData, setFormData }) {
+function DesignControls({ formData, setFormData, onBgImageSelect }) {
   const handleChange = (field, value) => {
     setFormData({ ...formData, [field]: value });
   };
@@ -55,14 +56,49 @@ function DesignControls({ formData, setFormData }) {
               onChange={(e) => handleChange('accentColor', e.target.value)}
             />
           </div>
+
+          {/* Background selector (new) */}
           <div className="col-6">
             <label className="form-label small">Background</label>
-            <input
-              type="color"
-              className="form-control color-input"
-              value={formData.bgColor}
-              onChange={(e) => handleChange('bgColor', e.target.value)}
-            />
+            <div className="d-flex gap-2 align-items-center">
+              <select
+                className="form-select"
+                value={formData.backgroundMode || 'color'}
+                onChange={(e) => handleChange('backgroundMode', e.target.value)}
+              >
+                <option value="color">Color</option>
+                <option value="image">Image</option>
+              </select>
+            </div>
+
+            {formData.backgroundMode === 'color' && (
+              <div className="mt-2">
+                <input
+                  type="color"
+                  className="form-control color-input"
+                  value={formData.bgColor}
+                  onChange={(e) => handleChange('bgColor', e.target.value)}
+                />
+              </div>
+            )}
+
+            {formData.backgroundMode === 'image' && (
+              <div className="mt-2">
+                {onBgImageSelect ? (
+                  <ImageUpload
+                    onImageSelect={(file) => {
+                      // parent should handle upload and update formData.backgroundImage with filename
+                      onBgImageSelect(file);
+                      // optimistically set a placeholder name until upload response returns
+                      handleChange('backgroundImage', file.name);
+                    }}
+                    label="Upload background"
+                  />
+                ) : (
+                  <small className="text-muted">Background image upload not available</small>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>

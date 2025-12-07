@@ -2,7 +2,6 @@ import React, { useState, useRef } from 'react';
 import ImageUpload from './components/ImageUpload';
 import ContentForm from './components/ContentForm';
 import DesignControls from './components/DesignControls';
-import PreviewPanel from './components/PreviewPanel';
 import PosterCanvas from './components/PosterCanvas';
 import { uploadImage, uploadLogo, analyzeImage, generateLayout } from './services/api';
 
@@ -17,30 +16,36 @@ function App() {
     primaryColor: '#FFD700',
     secondaryColor: '#000000',
     accentColor: '#8B4513',
-    bgColor: '#87CEEB'
+    backgroundMode: 'color',
+    bgColor: '#87CEEB',
+    backgroundImage: null
   });
 
   const [uploadedImage, setUploadedImage] = useState(null);
   const [uploadedLogo, setUploadedLogo] = useState(null);
+  const [bgFile, setBgFile] = useState(null);
+
   const [imageFile, setImageFile] = useState(null);
   const [logoFile, setLogoFile] = useState(null);
+
   const [isGenerating, setIsGenerating] = useState(false);
   const [status, setStatus] = useState('');
   const [layout, setLayout] = useState(null);
   const [poster, setPoster] = useState(null);
+
   const [renderTrigger, setRenderTrigger] = useState(0);
-  
   const canvasRef = useRef(null);
 
+  // -------------------------------
+  // PRODUCT IMAGE UPLOAD
+  // -------------------------------
   const handleImageSelect = async (file) => {
     setImageFile(file);
     setStatus('Uploading product image...');
-    
     try {
       const result = await uploadImage(file);
       setUploadedImage(result);
       setStatus('Product image uploaded! Background removed.');
-      
       setStatus('AI analyzing image...');
       await analyzeImage(result.nobg_filename);
       setStatus('Analysis complete!');
@@ -49,73 +54,130 @@ function App() {
     }
   };
 
+  // -------------------------------
+  // LOGO UPLOAD
+  // -------------------------------
   const handleLogoSelect = async (file) => {
     setLogoFile(file);
     setStatus('Uploading brand logo...');
-    
     try {
       const result = await uploadLogo(file);
       setUploadedLogo(result);
-      setStatus('Brand logo uploaded! Background removed.');
+      setStatus('Brand logo uploaded!');
     } catch (error) {
       setStatus('Logo upload failed: ' + error.message);
     }
   };
 
-  const handleGenerate = async () => {
-    if (!uploadedImage) return alert("Upload image first");
-
-    setIsGenerating(true);
-    setStatus('AI is studying your product...');
-
+  // -------------------------------
+  // BACKGROUND IMAGE UPLOAD
+  // -------------------------------
+  const handleBgImageUpload = async (file) => {
+    setBgFile(file);
+    setStatus('Uploading background image...');
     try {
-      const analysisResp = await analyzeImage(uploadedImage.nobg_filename);
-      const productAnalysis = analysisResp.analysis;
+      const formDataToSend = new FormData();
+      formDataToSend.append('image', file);
 
-      setStatus('Designing unique poster...');
+      const response = await fetch('http://localhost:5000/api/upload-bg', {
+        method: 'POST',
+        body: formDataToSend
+      });
 
-      const layoutResp = await generateLayout(
-        uploadedImage.nobg_filename,
-        uploadedLogo?.nobg_filename || null,
-        {
-          ...formData,
-          product_analysis: productAnalysis
-        },
-        formData.ratio
-      );
-
-      setLayout(layoutResp.layout);
-      setRenderTrigger(t => t + 1);
-      setTimeout(() => {
-        const dataUrl = canvasRef.current?.toDataURL('image/png');
-        setPoster(dataUrl);
-        setStatus('Poster ready! ✨');
-      }, 1000);
-
+      const data = await response.json();
+      
+      console.log("Background upload response:", data);
+      if (data.success) {
+        setFormData(prev => ({
+          ...prev,
+          backgroundImage: data.nobg_filename,
+          backgroundMode: "image"   // <-- CRITICAL FIX
+        }));
+        setStatus('Background uploaded successfully!');
+      }
+      else {
+        setStatus('Background upload failed: ' + data.error);
+      }
     } catch (err) {
-      setStatus('Error: ' + err.message);
-    } finally {
-      setIsGenerating(false);
+      setStatus('Upload error: ' + err.message);
     }
   };
+
+  // -------------------------------
+  // GENERATE POSTER
+  // -------------------------------
+const handleGenerate = async () => {
+  if (!uploadedImage) {
+    alert("Upload product image first");
+    return;
+  }
+
+  setIsGenerating(true);
+  setStatus('AI is studying your product...');
+
+  try {
+    // 1. Analyse product
+    const analysisResp = await analyzeImage(uploadedImage.nobg_filename);
+    const productAnalysis = analysisResp.analysis;
+
+    setStatus('Designing poster...');
+
+    // 2. THIS IS THE FINAL FIX – send backgroundImage with the exact key Gemini expects
+    const payloadForAI = {
+      ...formData,
+      backgroundImage: formData.backgroundImage, // ensure never lost
+      backgroundMode: formData.backgroundMode,
+      product_analysis: productAnalysis
+    };
+
+
+    console.log("🔍 FINAL formData BEFORE generate:", JSON.stringify(formData, null, 2));
+    // ↑ Open browser console → you’ll now see "backgroundImage": "2025…_mybg.jpg"
+
+    const layoutResp = await generateLayout(
+      uploadedImage.nobg_filename,
+      uploadedLogo?.nobg_filename || null,
+      payloadForAI,          // ← this object now contains backgroundImage
+      formData.ratio
+    );
+
+    setLayout(layoutResp.layout);
+    setRenderTrigger((t) => t + 1);
+
+    // 3. Export canvas only after React-Konva has fully rendered
+    setTimeout(() => {
+      if (canvasRef.current) {
+        const dataUrl = canvasRef.current.toDataURL({ pixelRatio: 2 }); // sharper PNG
+        setPoster(dataUrl);
+        setStatus('Poster ready – download below!');
+      }
+    }, 800);
+
+  } catch (err) {
+    console.error(err);
+    setStatus('Error: ' + (err.message || err));
+  } finally {
+    setIsGenerating(false);
+  }
+};
 
   return (
     <>
       {/* Background Gradient */}
-      <div className="min-vh-100" style={{
-        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-        position: 'fixed',
-        inset: 0,
-        zIndex: -1
-      }} />
+      <div
+        className="min-vh-100"
+        style={{
+          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          position: 'fixed',
+          inset: 0,
+          zIndex: -1
+        }}
+      />
 
       <div className="container py-5">
-        {/* Hero Header */}
+        {/* Header */}
         <div className="text-center mb-5">
-          <h1 className="display-3 fw-bold text-white mb-3" style={{ 
-            textShadow: '0 4px 20px rgba(0,0,0,0.3)',
-            letterSpacing: '-0.5px'
-          }}>
+          <h1 className="display-3 fw-bold text-white mb-3">
             AI Retail Poster Generator
           </h1>
           <p className="lead text-white opacity-90 fs-4">
@@ -124,51 +186,40 @@ function App() {
         </div>
 
         <div className="row g-5 align-items-start">
-          {/* Left Sidebar - Controls */}
+          {/* LEFT SIDE */}
           <div className="col-lg-5">
             <div className="sticky-top" style={{ top: '2rem' }}>
-              {/* Product Image Upload */}
-              <div className="glass-card mb-4">
-                <div className="p-4">
-                  <h5 className="fw-bold text-white mb-4 d-flex align-items-center gap-2">
-                    <span className="fs-3">Product Image</span>
-                  </h5>
-                  <ImageUpload onImageSelect={handleImageSelect} label="Drop your packshot here" />
-                </div>
+              {/* PRODUCT UPLOAD */}
+              <div className="glass-card mb-4 p-4">
+                <h5 className="fw-bold text-white mb-4">Product Image</h5>
+                <ImageUpload onImageSelect={handleImageSelect} label="Drop your packshot here" />
               </div>
 
-              {/* Logo Upload */}
-              <div className="glass-card mb-4">
-                <div className="p-4">
-                  <h5 className="fw-bold text-white mb-4 d-flex align-items-center gap-2">
-                    <span className="fs-3">Brand Logo (Optional)</span>
-                  </h5>
-                  <ImageUpload onImageSelect={handleLogoSelect} label="Upload logo" />
-                  <p className="text-white-50 small mt-3 mb-0">
-                    Your logo will appear cleanly in the corner
-                  </p>
-                </div>
+              {/* LOGO UPLOAD */}
+              <div className="glass-card mb-4 p-4">
+                <h5 className="fw-bold text-white mb-4">Brand Logo (Optional)</h5>
+                <ImageUpload onImageSelect={handleLogoSelect} label="Upload logo" />
               </div>
 
-              {/* Content Form */}
-              <div className="glass-card mb-4">
-                <div className="p-4">
-                  <h5 className="fw-bold text-white mb-4">Content</h5>
-                  <ContentForm formData={formData} setFormData={setFormData} />
-                </div>
+              {/* CONTENT */}
+              <div className="glass-card mb-4 p-4">
+                <h5 className="fw-bold text-white mb-4">Content</h5>
+                <ContentForm formData={formData} setFormData={setFormData} />
               </div>
 
-              {/* Design Controls */}
-              <div className="glass-card mb-4">
-                <div className="p-4">
-                  <h5 className="fw-bold text-white mb-4">Design & Colors</h5>
-                  <DesignControls formData={formData} setFormData={setFormData} />
-                </div>
+              {/* DESIGN & BACKGROUND */}
+              <div className="glass-card mb-4 p-4">
+                <h5 className="fw-bold text-white mb-4">Design & Colors</h5>
+                <DesignControls
+                  formData={formData}
+                  setFormData={setFormData}
+                  onBgImageSelect={handleBgImageUpload}
+                />
               </div>
 
-              {/* Generate Button */}
+              {/* GENERATE BTN */}
               <button
-                className="btn btn-lg w-100 fw-bold shadow-lg d-flex align-items-center justify-content-center gap-3"
+                className="btn btn-lg w-100 fw-bold shadow-lg"
                 style={{
                   background: 'linear-gradient(90deg, #FFD700, #FFA500)',
                   color: '#000',
@@ -179,66 +230,42 @@ function App() {
                   height: '64px'
                 }}
                 onClick={handleGenerate}
-                disabled={isGenerating || !uploadedImage}
+                disabled={isGenerating || !uploadedImage} // button enabled if product image uploaded
               >
-                {isGenerating ? (
-                  <>
-                    <div className="spinner-border text-dark" role="status" style={{ width: '1.5rem', height: '1.5rem' }} />
-                    <span>AI is Creating Your Poster...</span>
-                  </>
-                ) : (
-                  <>
-                    <span>Generate with AI</span>
-                  </>
-                )}
+                {isGenerating ? "AI is Creating..." : "Generate with AI"}
               </button>
 
-              {/* Status */}
+              {/* STATUS */}
               {status && (
-                <div className="mt-4 p-4 rounded-4 text-white text-center fw-medium"
-                     style={{ background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(10px)' }}>
+                <div className="mt-4 p-4 rounded-4 text-white text-center"
+                  style={{ background: 'rgba(255,255,255,0.15)' }}>
                   {status}
                 </div>
               )}
             </div>
           </div>
 
-          {/* Right Side - Poster Preview */}
-          <div className="col-lg-7">
-            <div className="text-center">
-              {layout && uploadedImage ? (
-                <div className="d-inline-block position-relative">
-                  <div className="preview-container shadow-2xl">
-                    <PosterCanvas
-                      key={renderTrigger}
-                      ref={canvasRef}
-                      layout={layout}
-                      formData={formData}
-                      imageUrl={`http://localhost:5000/uploads/${uploadedImage.nobg_filename}`}
-                      logoUrl={uploadedLogo ? `http://localhost:5000/uploads/${uploadedLogo.nobg_filename}` : null}
-                      onRenderComplete={(canvas) => {
-                        console.log('Canvas rendered:', canvas.width, 'x', canvas.height);
-                      }}
-                    />
-                  </div>
-                  <div className="mt-4">
-                    <p className="text-white fs-5 fw-medium opacity-90">
-                      Your AI-generated poster is ready!
-                    </p>
-                  </div>
-                </div>
-              ) : (
-                <div className="preview-placeholder">
-                  <div className="placeholder-content">
-                    <div className="placeholder-icon mb-4">Poster Preview</div>
-                    <p className="text-white-50 fs-5">
-                      Upload a product image and click <strong>Generate with AI</strong><br />
-                      to see your professional poster appear here
-                    </p>
-                  </div>
-                </div>
-              )}
-            </div>
+          {/* RIGHT SIDE PREVIEW */}
+          <div className="col-lg-7 text-center">
+            {layout && uploadedImage ? (
+              <div className="d-inline-block position-relative">
+                <PosterCanvas
+                  key={renderTrigger}
+                  ref={canvasRef}
+                  layout={layout}
+                  formData={formData}
+                  imageUrl={`http://localhost:5000/uploads/${uploadedImage.nobg_filename}`}
+                  logoUrl={uploadedLogo ? `http://localhost:5000/uploads/${uploadedLogo.nobg_filename}` : null}
+                  bgImageUrl={
+                    formData.backgroundMode === "image" && formData.backgroundImage
+                      ? `http://localhost:5000/uploads/${formData.backgroundImage}`
+                      : null
+                  }
+                />
+              </div>
+            ) : (
+              <div className="preview-placeholder">Upload an image to get started</div>
+            )}
           </div>
         </div>
       </div>
@@ -250,43 +277,19 @@ function App() {
           border-radius: 1.5rem;
           backdrop-filter: blur(16px);
           border: 1px solid rgba(255, 255, 255, 0.2);
-          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-          overflow: hidden;
-          transition: transform 0.2s;
-        }
-        .glass-card:hover {
-          transform: translateY(-4px);
-        }
-        .preview-container {
-          border-radius: 1.5rem;
-          overflow: hidden;
-          box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
-          background: white;
-          display: inline-block;
         }
         .preview-placeholder {
           width: 100%;
           max-width: 500px;
           height: 600px;
-          background: rgba(255, 255, 255, 0.1);
           border-radius: 1.5rem;
-          backdrop-filter: blur(10px);
-          border: 2px dashed rgba(255, 255, 255, 0.3);
+          background: rgba(255, 255, 255, 0.2);
+          backdrop-filter: blur(8px);
           display: flex;
           align-items: center;
           justify-content: center;
-          margin: 0 auto;
-        }
-        .placeholder-content {
-          text-align: center;
-          padding: 2rem;
-        }
-        .placeholder-icon {
-          font-size: 4rem;
-          opacity: 0.3;
-        }
-        .shadow-2xl {
-          box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.45);
+          color: white;
+          font-size: 1.25rem;
         }
       `}</style>
     </>

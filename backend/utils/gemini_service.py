@@ -11,7 +11,7 @@ class GeminiService:
         self.api_key = api_key
         if api_key:
             genai.configure(api_key=api_key)
-            self.model = genai.GenerativeModel('gemini-2.0-flash')
+            self.model = genai.GenerativeModel('gemini-2.5-flash-lite')
         else:
             self.model = None
     
@@ -40,7 +40,8 @@ Return ONLY a valid JSON object with this structure:
 
 Be concise and return only the JSON."""
 
-            response = self.model.generate_content([prompt, img])
+            # Keep the image part simple; some SDKs accept binary attachments differently.
+            response = self.model.generate_content(prompt)
             analysis = self._extract_json(response.text)
             
             if analysis:
@@ -52,49 +53,63 @@ Be concise and return only the JSON."""
             print(f"Gemini analysis error: {str(e)}")
             return self._fallback_analysis()
     
-    def generate_layout(self, canvas, form_data, product_analysis=None, has_logo=False, image_url=None, logo_url=None):
+    def generate_layout(self, canvas, form_data, product_analysis=None, has_logo=False, image_url=None, logo_url=None, background_image_url=None):
+        """
+        Generate a layout. If background_image_url is provided, instruct Gemini to use it as the canvas background.
+        Otherwise use the background color provided in form_data (bgColor).
+        """
         if not self.is_configured():
-            return self._fallback_layout(canvas, form_data, has_logo)
+            return self._fallback_layout(canvas, form_data, has_logo, background_image_url)
 
         try:
             w, h = canvas['width'], canvas['height']
             prod_type = (product_analysis or {}).get("product_type", "product")
             prod_colors = (product_analysis or {}).get("dominant_colors", ["#000000", "#FFFFFF"])
+            bg_mode = form_data.get('backgroundMode') or ('image' if background_image_url else 'color')
+            bg_color = form_data.get('bgColor', '#FFFFFF')
 
-            prompt = f"""
-You are the world's best retail poster designer.
+            # Build explicit instructions for background usage
+            if background_image_url:
+                bg_instruction = f"Use the following URL as the full-bleed background image: {background_image_url}. " \
+                                 "Make sure the product, badges and text are clearly visible on top — add overlays, blur, or gradient if necessary for legibility."
+            else:
+                bg_instruction = f"Use the solid background color: {bg_color}."
 
-Create a complete, standalone HTML file with inline CSS.
+            print(f"Generating layout with bg_mode: {bg_mode}, bg_instruction: {bg_instruction}")
+            print(background_image_url)
 
-CRITICAL REQUIREMENTS:
-- Canvas MUST be EXACTLY {w}px × {h}px (use width:{w}px; height:{h}px;)
-- No element should overlap. Maintain at least 40px spacing between elements.
-- Maintain a safe zone of 5% around all edges.
-- Respect aspect ratio (portrait / landscape / square) and adjust layout automatically.
-
+            prompt = f""" You are the world's best retail poster designer. Create a complete, standalone HTML file with inline CSS.
+CRITICAL REQUIREMENTS: - Canvas MUST be EXACTLY {w}px × {h}px (use width:{w}px; height:{h}px;) - No element should overlap. 
+Maintain at least 40px spacing between elements. - Maintain a safe zone of 5% around all edges. 
+- Respect aspect ratio (portrait / landscape / square) and adjust layout automatically. 
 CONTENT:
-- Product: {image_url}
-- Logo: {logo_url if has_logo else 'none'}
-- Headline: {form_data.get('headline')}
-- Subheadline: {form_data.get('subheadline')}
-- Price: {form_data.get('price')}
-- Offer: {form_data.get('offer')}
-- Description: {form_data.get('description')}
+- Product: {image_url} 
+- Logo: {logo_url if has_logo else 'none'} 
+- Headline: {form_data.get('headline')} 
+- Subheadline: {form_data.get('subheadline')} 
+- Price: {form_data.get('price')} 
+- Offer: {form_data.get('offer')} 
+- Description: {form_data.get('description')} 
 
-DESIGN RULES:
-- Use absolute positioning
-- Logo should be 20–30% larger than usual. Keep it top-right or top-left without overlap.
-- Price badge can be of any shape but must be eye-catching.
-- Price badge adjusts automatically to canvas ratio
-- Product image should be large, centered, and NEVER overlap with text or badges
-- Text must be bold, large, high contrast
-- Use Google Fonts (Impact, Bebas Neue, Oswald, Montserrat)
-- Add creative shapes if needed but ensure they don't cover text or product
-- No elements should overlap each other either text or images
-- NEVER repeat the same design - be creative!
+BACKGROUND:
+- Background mode: {bg_mode}
+- {bg_instruction}
 
+DESIGN RULES: 
+- Use absolute positioning 
+- Logo should be 20–30% larger than usual. Keep it top-right or top-left without overlap. 
+- Price badge can be of any shape but must be eye-catching. 
+- Price badge adjusts automatically to canvas ratio 
+- Product image should be large according to layout, centered, and NEVER overlap with text or badges 
+- Price badge must NOT overlap with product image and must be left side of the canvas (on left half either bottom-left or middle-left) 
+- Offer badge must NOT overlap with product image and must be rigt side of the canvas (on right half either bottom-right or middle-right) 
+- Text must be bold, large, high contrast - Use Google Fonts (Impact, Bebas Neue, Oswald, Montserrat) 
+- Add creative shapes but ensure they don't cover text or product 
+- No elements should overlap each other either text or images check twice before finalizing 
+- NEVER repeat the same design 
+- be creative! 
 **Example Structure:**
-```html
+html
 <!DOCTYPE html>
 <html>
 <head>
@@ -115,16 +130,11 @@ body {{
   <!-- Your creative HTML here -->
 </body>
 </html>
-```
-
-OUTPUT ONLY THE COMPLETE HTML CODE.
-Start with <!DOCTYPE html> and end with </html>.
-NO markdown, NO explanation, NO json - JUST HTML."""
-
+OUTPUT ONLY THE COMPLETE HTML CODE. Start with <!DOCTYPE html> and end with </html>. NO markdown, NO explanation, NO json - JUST HTML."""
             response = self.model.generate_content(
                 prompt,
                 generation_config=genai.types.GenerationConfig(
-                    temperature=1.2,
+                    temperature=1.0,
                     top_p=0.95,
                     max_output_tokens=4000,
                 )
@@ -132,30 +142,30 @@ NO markdown, NO explanation, NO json - JUST HTML."""
 
             html = response.text.strip()
 
-            # Clean up markdown artifacts
+            # Clean up fenced codeblocks if present
             html = re.sub(r'^```html\s*', '', html, flags=re.IGNORECASE)
             html = re.sub(r'```\s*$', '', html)
             html = html.strip()
 
-            # Verify it's HTML
+            # If model returned HTML, ensure sizes are enforced
             if "<html" in html.lower() or "<!doctype" in html.lower():
-                # Ensure dimensions are correct (safety check)
+                # Safety: ensure width & height exist in style
                 if f"width: {w}px" not in html or f"height: {h}px" not in html:
                     html = html.replace(
-                        "<style>", 
+                        "<style>",
                         f"<style>\nbody {{ margin: 0; padding: 0; width: {w}px; height: {h}px; overflow: hidden; }}\n"
                     )
                 return {"type": "html", "content": html}
 
-            # Fallback if Gemini fails
-            return self._fallback_layout(canvas, form_data, has_logo)
+            # Fallback
+            return self._fallback_layout(canvas, form_data, has_logo, background_image_url)
 
         except Exception as e:
             print("HTML generation failed:", e)
             import traceback
             traceback.print_exc()
-            return self._fallback_layout(canvas, form_data, has_logo)
-   
+            return self._fallback_layout(canvas, form_data, has_logo, background_image_url)
+
         
     def _extract_json(self, text):
         """Robust JSON extraction from Gemini output"""
@@ -199,7 +209,7 @@ NO markdown, NO explanation, NO json - JUST HTML."""
 
         return None
 
-    
+
     def _fallback_analysis(self):
         """Return default analysis when Gemini fails"""
         return {
@@ -209,17 +219,31 @@ NO markdown, NO explanation, NO json - JUST HTML."""
             "style_recommendation": "modern",
             "positioning_advice": "Center the product prominently"
         }
-    
-    def _fallback_layout(self, canvas, form_data, has_logo=False):
-        """Return default layout when Gemini fails"""
+
+    def _fallback_layout(self, canvas, form_data, has_logo=False, background_image_url=None):
+        """Return default layout when Gemini fails. Supports background image or color."""
         w = canvas['width']
         h = canvas['height']
         
-        layout = {
-            "background": {
+        bg_mode = form_data.get('backgroundMode') or ('image' if background_image_url else 'color')
+        bg_color = form_data.get('bgColor', '#87CEEB')
+
+        background = {}
+        if background_image_url:
+            background = {
+                "type": "image",
+                "url": background_image_url,
+                "stretch": "cover",
+                "overlay": "rgba(0,0,0,0.18)"  # subtle overlay for legibility
+            }
+        else:
+            background = {
                 "type": "solid",
-                "colors": [form_data.get('bgColor', '#87CEEB')]
-            },
+                "colors": [bg_color]
+            }
+
+        layout = {
+            "background": background,
             "decorative_elements": [
                 {
                     "type": "circle",
@@ -239,7 +263,7 @@ NO markdown, NO explanation, NO json - JUST HTML."""
                 "text": form_data.get('headline', ''),
                 "x": 0.5,
                 "y": 0.15,
-                "fontSize": h * 0.065,
+                "fontSize": int(h * 0.065),
                 "color": form_data.get('secondaryColor', '#000000'),
                 "weight": 900,
                 "align": "center"
@@ -248,7 +272,7 @@ NO markdown, NO explanation, NO json - JUST HTML."""
                 "text": form_data.get('subheadline', ''),
                 "x": 0.5,
                 "y": 0.22,
-                "fontSize": h * 0.028,
+                "fontSize": int(h * 0.028),
                 "color": form_data.get('secondaryColor', '#000000'),
                 "weight": 600,
                 "align": "center"
@@ -261,14 +285,14 @@ NO markdown, NO explanation, NO json - JUST HTML."""
                 "bgColor": form_data.get('primaryColor', '#FFD700'),
                 "price": form_data.get('price', ''),
                 "offer": form_data.get('offer', ''),
-                "fontSize": h * 0.042
+                "fontSize": int(h * 0.042)
             },
             "description": {
                 "text": form_data.get('description', ''),
                 "x": 0.5,
                 "y": 0.88,
-                "fontSize": h * 0.022,
-                "color": form_data.get('secondaryColor', '#000000') + 'BB',
+                "fontSize": int(h * 0.022),
+                "color": (form_data.get('secondaryColor', '#000000') + 'BB') if form_data.get('secondaryColor') else '#000000BB',
                 "align": "center"
             },
             "new_badge": {

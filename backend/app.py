@@ -37,7 +37,7 @@ os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 # Initialize services
 image_processor = ImageProcessor()
-gemini_service = GeminiService("AIzaSyBP1VnlSoHZZFulQ8zrhQCzAVDtUMPagpA")
+gemini_service = GeminiService("")
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -85,6 +85,42 @@ def upload_image():
             'success': True,
             'original_filename': filename,
             'nobg_filename': nobg_filename,
+            'image_info': image_info
+        })
+    
+    except Exception as e:
+        print(f"Upload error: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/upload-bg', methods=['POST'])
+def upload_bg():
+    """Handle image upload and background removal"""
+    try:
+        if 'image' not in request.files:
+            return jsonify({'error': 'No image provided'}), 400
+        
+        file = request.files['image']
+        
+        if file.filename == '' or not allowed_file(file.filename):
+            return jsonify({'error': 'Invalid file'}), 400
+        
+        # Save original image
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        filename = secure_filename(f"{timestamp}_{file.filename}")
+        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        file.save(filepath)
+        
+        print(f"Image saved: {filepath}")
+                
+        # Get image info
+        image_info = image_processor.get_image_info(filepath)
+        
+        return jsonify({
+            'success': True,
+            'original_filename': filename,
+            'nobg_filename': filename,
             'image_info': image_info
         })
     
@@ -173,20 +209,37 @@ def analyze_image():
         traceback.print_exc()
         return jsonify({'error': str(e)}), 500
 
+# app.py (only the generate_layout route and a small surrounding context shown)
 @app.route('/api/generate-layout', methods=['POST'])
 def generate_layout():
     try:
-        data = request.json
+        data = request.json or {}
         image_filename = data.get('image_filename')
         logo_filename = data.get('logo_filename')
-        form_data = data.get('form_data', {})
-        product_analysis = data.get('product_analysis')
+        form_data = data.get('form_data', {}) or {}
+        # Product analysis may come either as a top-level field or inside form_data
+        product_analysis = data.get('product_analysis') or form_data.get('product_analysis') or globals().get('product_analysis', {})
         ratio = data.get('ratio', '1:1')
 
         # Build URLs
         image_url = f"http://localhost:5000/uploads/{image_filename}" if image_filename else ""
         logo_url = f"http://localhost:5000/uploads/{logo_filename}" if logo_filename else None
 
+        # Background image (if frontend uploaded background and set filename in form_data.backgroundImage)
+       # Inside /api/generate-layout route
+        background_image_filename = (
+            form_data.get('backgroundImage') or
+            # React sends this
+            form_data.get('background_image') or       # just in case
+            data.get('background_image')               # if sent at top level
+        )
+
+        background_image_url = f"http://localhost:5000/uploads/{background_image_filename}" \
+            if background_image_filename else None
+
+        print("Background filename:", background_image_filename)        # ← debug
+        print("Background URL:", background_image_url)                  # ← should now show real URL
+        # Canvas sizes
         canvas = {'width': 1080, 'height': 1080} if ratio == '1:1' else {'width': 1080, 'height': 1920} if ratio == '9:16' else {'width': 1200, 'height': 628}
 
         result = gemini_service.generate_layout(
@@ -195,7 +248,8 @@ def generate_layout():
             product_analysis=product_analysis,
             has_logo=(logo_filename is not None),
             image_url=image_url,
-            logo_url=logo_url
+            logo_url=logo_url,
+            background_image_url=background_image_url
         )
 
         return jsonify({"success": True, "layout": result})
