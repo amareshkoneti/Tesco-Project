@@ -79,7 +79,7 @@ const PreviewPanel = ({ poster, layout, isGenerating, formData }) => {
               className="btn btn-success btn-sm"
               onClick={handleDownload}
             >
-              📥 Download PNG
+              Download PNG
             </button>
           </div>
           
@@ -109,7 +109,7 @@ const PreviewPanel = ({ poster, layout, isGenerating, formData }) => {
                 top: 0,
                 left: 0
               }}
-              sandbox="allow-scripts"
+              sandbox="allow-scripts allow-same-origin"
             />
           </div>
           
@@ -144,7 +144,7 @@ const PreviewPanel = ({ poster, layout, isGenerating, formData }) => {
               download={`poster-${Date.now()}.png`}
               className="btn btn-success"
             >
-              📥 Download
+              Download
             </a>
           </div>
         </div>
