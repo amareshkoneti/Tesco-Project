@@ -3,6 +3,7 @@ import re
 import google.generativeai as genai
 from PIL import Image
 import os
+import random
 
 class GeminiService:
     """Handle all Gemini AI operations"""
@@ -67,69 +68,48 @@ Be concise and return only the JSON."""
             prod_colors = (product_analysis or {}).get("dominant_colors", ["#000000", "#FFFFFF"])
             bg_mode = form_data.get('backgroundMode') or ('image' if background_image_url else 'color')
             bg_color = form_data.get('bgColor', '#FFFFFF')
+            tag_shapes = [
+                "rectangle",
+                "square",
+                "circle",
+                "oval",
+                "rounded_rectangle",
+                "tag",
+                "ticket",
+                "hexagon",
+                "pentagon",
+                "octagon",
+                "starburst",
+                "star",
+                "badge",
+                "shield",
+                "banner",
+                "ribbon",
+                "pill",
+                "price_chip",
+                "sunburst",
+            ]
 
             # Build explicit instructions for background usage
             if background_image_url:
                 bg_instruction = f"Use the following URL as the full-bleed background image: {background_image_url}. " \
                                  "Make sure the product, badges and text are clearly visible on top — add overlays, blur, or gradient if necessary for legibility."
             else:
-                bg_instruction = f"Use the solid background color: {bg_color}."
+                bg_instruction = f"Use the selected background color {bg_color} only as the base. Build a visually rich background on top of it using gradients, soft glows, light textures, subtle patterns, watercolor effects, or abstract shapes — but keep the base color visible. Do NOT use plain flat color."
 
             print(f"Generating layout with bg_mode: {bg_mode}, bg_instruction: {bg_instruction}")
             print(background_image_url)
 
-            prompt = f""" You are the world's best retail poster designer. Create a complete, standalone HTML file with inline CSS.
-CRITICAL REQUIREMENTS: - Canvas MUST be EXACTLY {w}px × {h}px (use width:{w}px; height:{h}px;) - No element should overlap. 
-Maintain at least 40px spacing between elements. - Maintain a safe zone of 5% around all edges. 
-- Respect aspect ratio (portrait / landscape / square) and adjust layout automatically. 
-- Product image must be sized large or small and positioned according to best practices for ratio.
-CONTENT:
-- Product: {image_url} 
-- Logo: {logo_url if has_logo else 'none'} 
-- Headline: {form_data.get('headline')} 
-- Subheadline: {form_data.get('subheadline')} 
-- Price: {form_data.get('price')} 
-- Offer: {form_data.get('offer')} 
-- Description: {form_data.get('description')} 
-
-BACKGROUND:
-- Background mode: {bg_mode}
-- {bg_instruction}
-
-DESIGN RULES: 
-- Use absolute positioning 
-- Logo should be 20–30% larger than usual. Keep it top-right or top-left without overlap. 
-- Price badge can be of any shape but must be eye-catching. 
-- Price badge adjusts automatically to canvas ratio 
-- Product image should be large according to layout, centered, and NEVER overlap with text or badges 
-- Text must be bold, large, high contrast - Use Google Fonts (Impact, Bebas Neue, Oswald, Montserrat) 
-- Add creative shapes but ensure they don't cover text or product 
-- No elements should overlap each other either text or images check twice before finalizing 
-- NEVER repeat the same design 
-- be creative! 
-**Example Structure:**
-html
-<!DOCTYPE html>
-<html>
-<head>
-<style>
-body {{
-  margin: 0;
-  padding: 0;
-  width: {w}px;
-  height: {h}px;
-  overflow: hidden;
-  background: {form_data.get('bgColor')};
-  position: relative;
-}}
-/* Your creative styles here */
-</style>
-</head>
-<body>
-  <!-- Your creative HTML here -->
-</body>
-</html>
-OUTPUT ONLY THE COMPLETE HTML CODE. Start with <!DOCTYPE html> and end with </html>. NO markdown, NO explanation, NO json - JUST HTML."""
+            prompt = f""" Use these inputs to generate a creative HTML poster layout in {w}:{h} ratio:
+Product = {image_url}, Logo = {logo_url if has_logo else 'none'}, Headline = {form_data.get('headline')}, Subheadline = {form_data.get('subheadline')}, Price = {form_data.get('price')}, Offer = {form_data.get('offer')}, 
+Description = {form_data.get('description')}, Background Mode = {bg_mode}, Background Instruction = {bg_instruction}.
+Create a complete standalone HTML file with inline CSS, canvas EXACTLY {w}px × {h}px.
+Product should occupy 60% of area, logo 70% of product size at top-left/right, no overlapping, maintain 40px spacing and 5% safe zone.
+Use {random.choice(tag_shapes)} shape for Price, Use {random.choice(tag_shapes)} shape for Offer.
+Use absolute positioning, bold high-contrast fonts, creative shapes, use Google Fonts and check carefully that no elements overlap.
+Create a visually Good looking poster and be creative as hell while design in each part in poser. Output ONLY the final HTML from <!DOCTYPE html> to </html>.
+"""
+            
             response = self.model.generate_content(
                 prompt,
                 generation_config=genai.types.GenerationConfig(
