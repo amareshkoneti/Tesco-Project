@@ -6,25 +6,9 @@ function DesignControls({ formData, setFormData, onBgImageSelect }) {
     setFormData({ ...formData, [field]: value });
   };
 
-  const ratios = ['1:1', '9:16', '1.91:1'];
 
   return (
     <div>
-      <div className="mb-4">
-        <label className="form-label fw-semibold">Format</label>
-        <div className="btn-group w-100" role="group">
-          {ratios.map((ratio) => (
-            <button
-              key={ratio}
-              type="button"
-              className={`btn ${formData.ratio === ratio ? 'btn-primary' : 'btn-outline-primary'}`}
-              onClick={() => handleChange('ratio', ratio)}
-            >
-              {ratio}
-            </button>
-          ))}
-        </div>
-      </div>
 
       <div className="mb-3">
         <label className="form-label fw-semibold">Brand Colors</label>

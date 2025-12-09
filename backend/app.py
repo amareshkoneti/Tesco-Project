@@ -37,7 +37,7 @@ os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 # Initialize services
 image_processor = ImageProcessor()
-gemini_service = GeminiService("AIzaSyBfozhc3gQ29mQDbPrOAowTuLfR9Y-folI")
+gemini_service = GeminiService("")
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -241,10 +241,26 @@ def generate_layout():
         print("Background URL:", background_image_url)                  # ← should now show real URL
         # Canvas sizes
         print("Generating layout with ratio:", ratio)
-        canvas = {'width': 1080, 'height': 1080} if ratio == '1:1' else {'width': 1080, 'height': 1920} if ratio == '9:16' else {'width': 1200, 'height': 628}
+        canvas_1 = {'width': 1080, 'height': 1080} 
+        canvas_2 = {'width': 1080, 'height': 1920}
+        canvas_3 = {'width': 1200, 'height': 628}
 
-        result = gemini_service.generate_layout(
-            canvas=canvas,
+        print("generating layout with canvas size:", canvas_1)
+
+        layout_1= gemini_service.generate_layout(
+            canvas=canvas_1,
+            form_data=form_data,
+            product_analysis=product_analysis,
+            has_logo=(logo_filename is not None),
+            image_url=image_url,
+            logo_url=logo_url,
+            background_image_url=background_image_url
+        )        
+
+        print("generating layout with canvas size:", canvas_2)
+
+        layout_2 = gemini_service.generate_layout(
+            canvas=canvas_2,
             form_data=form_data,
             product_analysis=product_analysis,
             has_logo=(logo_filename is not None),
@@ -253,7 +269,19 @@ def generate_layout():
             background_image_url=background_image_url
         )
 
-        return jsonify({"success": True, "layout": result})
+        print("generating layout with canvas size:", canvas_3)
+
+        layout_3 = gemini_service.generate_layout(
+            canvas=canvas_3,
+            form_data=form_data,
+            product_analysis=product_analysis,
+            has_logo=(logo_filename is not None),
+            image_url=image_url,
+            logo_url=logo_url,
+            background_image_url=background_image_url
+        )
+
+        return jsonify({"success": True, "layout_1": layout_1, "layout_2": layout_2, "layout_3": layout_3})
 
     except Exception as e:
         import traceback

@@ -95,7 +95,7 @@ Be concise and return only the JSON."""
                 bg_instruction = f"Use the following URL as the full-bleed background image: {background_image_url}. " \
                                  "Make sure the product, badges and text are clearly visible on top — add overlays, blur, or gradient if necessary for legibility."
             else:
-                bg_instruction = f"Use the selected background color {bg_color} only as the base. Build a visually rich background on top of it using gradients, soft glows, light textures, subtle patterns, watercolor effects, or abstract shapes — but keep the base color visible. Do NOT use plain flat color."
+                bg_instruction = f"Use the selected background color {bg_color} only as the base. Build a visually rich background on top of it using gradients, soft glows, light textures, subtle patterns, watercolor effects, or abstract shapes — but keep the base color visible add some underlayed design. Do NOT use plain flat color."
 
             print(f"Generating layout with bg_mode: {bg_mode}, bg_instruction: {bg_instruction}")
             print(background_image_url)
