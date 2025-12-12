@@ -31,32 +31,47 @@ const PreviewPanel = ({ layout, selectedRatio, isGenerating }) => {
 
   // Download function
   const handleDownload = async () => {
-    if (!iframeRef.current) return;
+  if (!iframeRef.current) return;
 
-    const iframe = iframeRef.current;
-    const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+  const iframe = iframeRef.current;
+  const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
 
-    await new Promise(res => setTimeout(res, 200));
+  await new Promise(res => setTimeout(res, 200));
 
-    try {
-      const canvas = await html2canvas(iframeDoc.body, {
-        width: dimensions.width,
-        height: dimensions.height,
-        scale: 2,
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: null
-      });
+  try {
+    // STEP 1: Render canvas at lower scale
+    const canvas = await html2canvas(iframeDoc.body, {
+      width: dimensions.width,
+      height: dimensions.height,
+      scale: 1,               // reduce size
+      useCORS: true,
+      allowTaint: true,
+      backgroundColor: null
+    });
 
-      const link = document.createElement('a');
-      link.download = `poster-${selectedRatio}-${Date.now()}.png`;
-      link.href = canvas.toDataURL('image/png');
-      link.click();
-    } catch (error) {
-      console.error('Download failed:', error);
-      alert('Download failed. Please try again.');
+    // STEP 2: Convert to JPEG with initial quality
+    let quality = 0.9;
+    let dataURL = canvas.toDataURL("image/jpeg", quality);
+
+    // STEP 3: Adjust quality until file < 500 KB
+    const targetSize = 500 * 1024; // 500 KB
+    while (dataURL.length > targetSize && quality > 0.2) {
+      quality -= 0.1;
+      dataURL = canvas.toDataURL("image/jpeg", quality);
     }
-  };
+
+    // STEP 4: Trigger download
+    const link = document.createElement("a");
+    link.download = `poster-${selectedRatio}-${Date.now()}.jpg`;
+    link.href = dataURL;
+    link.click();
+
+  } catch (error) {
+    console.error("Download failed:", error);
+    alert("Download failed. Please try again.");
+  }
+};
+
 
   if (isGenerating) {
     return (
