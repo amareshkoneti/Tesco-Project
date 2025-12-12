@@ -32,13 +32,7 @@ export const analyzeImage = async (filename) => {
   return response.data;
 };
 
-export const generateLayout = async (filename, logoFilename, formData, ratio) => {
-  const response = await axios.post(`${API_BASE}/api/generate-layout`, {
-    image_filename: filename,
-    logo_filename: logoFilename,
-    form_data: formData,
-    ratio: ratio
-  });
-
+export const generateLayout = async (payload) => {
+  const response = await axios.post(`${API_BASE}/api/generate-layout`, payload);
   return response.data;
 };

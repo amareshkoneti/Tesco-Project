@@ -8,6 +8,8 @@ from werkzeug.utils import secure_filename
 from dotenv import load_dotenv
 from utils.image_processor import ImageProcessor
 from utils.gemini_service import GeminiService
+from utils.compliance_checker import ComplianceChecker
+
 
 load_dotenv()
 
@@ -193,10 +195,6 @@ def analyze_image():
         analysis = gemini_service.analyze_product_image(image_path)
 
         print(f"Analysis result: {analysis}")
-
-        global product_analysis
-        product_analysis = analysis
-
         
         return jsonify({
             'success': True,
@@ -216,10 +214,8 @@ def generate_layout():
         data = request.json or {}
         image_filename = data.get('image_filename')
         logo_filename = data.get('logo_filename')
-        form_data = data.get('form_data', {}) or {}
         # Product analysis may come either as a top-level field or inside form_data
-        product_analysis = data.get('product_analysis') or form_data.get('product_analysis') or globals().get('product_analysis', {})
-        ratio = data.get('ratio', '1:1')
+        product_analysis = data.get('product_analysis')
 
         # Build URLs
         image_url = f"http://localhost:5000/uploads/{image_filename}" if image_filename else ""
@@ -228,10 +224,7 @@ def generate_layout():
         # Background image (if frontend uploaded background and set filename in form_data.backgroundImage)
        # Inside /api/generate-layout route
         background_image_filename = (
-            form_data.get('backgroundImage') or
-            # React sends this
-            form_data.get('background_image') or       # just in case
-            data.get('background_image')               # if sent at top level
+            data.get('backgroundImage')# if sent at top level
         )
 
         background_image_url = f"http://localhost:5000/uploads/{background_image_filename}" \
@@ -240,7 +233,6 @@ def generate_layout():
         print("Background filename:", background_image_filename)        # ← debug
         print("Background URL:", background_image_url)                  # ← should now show real URL
         # Canvas sizes
-        print("Generating layout with ratio:", ratio)
         canvas_1 = {'width': 1080, 'height': 1080} 
         canvas_2 = {'width': 1080, 'height': 1920}
         canvas_3 = {'width': 1200, 'height': 628}
@@ -249,20 +241,40 @@ def generate_layout():
 
         layout_1= gemini_service.generate_layout(
             canvas=canvas_1,
-            form_data=form_data,
-            product_analysis=product_analysis,
+            form_data=data,
             has_logo=(logo_filename is not None),
             image_url=image_url,
             logo_url=logo_url,
             background_image_url=background_image_url
         )        
+        print("Layout 1 generated: ", layout_1)
+        checker = ComplianceChecker(gemini_service)   # pass your gemini instance so it uses the configured key
+
+        # If you want to run HTML-only compliance (no PNG), do:
+        compliance_report = checker.check_html(
+            html_content = layout_1['content'],                         # HTML string returned by Gemini layout
+            objects = product_analysis.get("objects", []),                      # product detection objects
+            assets = {
+                "user_inputs": data,
+                "format": {"width": canvas_1["width"], "height": canvas_1["height"]}
+            }
+        )
+
+        # compliance_report expected shape: { "passed": bool, "reason": "...", "details": [...] }
+        if not compliance_report.get("passed", False):
+            print("Compliance check failed:", compliance_report)
+            return jsonify({
+                "success": False,
+                "error": "Poster failed compliance rules",
+                "compliance": compliance_report
+            }), 400
+                
 
         print("generating layout with canvas size:", canvas_2)
 
         layout_2 = gemini_service.generate_layout(
             canvas=canvas_2,
-            form_data=form_data,
-            product_analysis=product_analysis,
+            form_data=data,
             has_logo=(logo_filename is not None),
             image_url=image_url,
             logo_url=logo_url,
@@ -273,8 +285,7 @@ def generate_layout():
 
         layout_3 = gemini_service.generate_layout(
             canvas=canvas_3,
-            form_data=form_data,
-            product_analysis=product_analysis,
+            form_data=data,
             has_logo=(logo_filename is not None),
             image_url=image_url,
             logo_url=logo_url,

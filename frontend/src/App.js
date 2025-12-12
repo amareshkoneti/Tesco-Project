@@ -105,47 +105,51 @@ function App() {
   // GENERATE POSTER
   // -------------------------------
   const handleGenerate = async () => {
-    if (!uploadedImage) {
-      alert("Upload product image first");
+  if (!uploadedImage) {
+    alert("Upload product image first");
+    return;
+  }
+
+  setIsGenerating(true);
+  setStatus("AI is studying your product...");
+
+  try {
+    const analysisResp = await analyzeImage(uploadedImage.nobg_filename);
+    const productAnalysis = analysisResp.analysis;
+
+    setStatus("Designing poster...");
+
+    const payloadForAI = {
+      ...formData,
+      product_analysis: productAnalysis,
+      image_filename: uploadedImage.nobg_filename,
+      logo_filename: uploadedLogo?.nobg_filename || null
+    };
+
+    const layoutResp = await generateLayout(payloadForAI);
+
+    if (!layoutResp.success) {
+      // Compliance failed
+      console.error("Compliance failed:", layoutResp.compliance);
+      setStatus(`❌ Poster blocked: ${layoutResp.error}`);
+      alert("Poster failed compliance rules. Check console for details.");
       return;
     }
 
-    setIsGenerating(true);
-    setStatus('AI is studying your product...');
+    // Layout generated successfully
+    setLayouts(layoutResp);
+    setSelectedRatio("1:1");
+    setRenderTrigger((t) => t + 1);
+    setStatus("🎉 Poster generated! Choose a ratio to preview.");
 
-    try {
-      const analysisResp = await analyzeImage(uploadedImage.nobg_filename);
-      const productAnalysis = analysisResp.analysis;
+  } catch (err) {
+    console.error(err);
+    setStatus("Error: " + (err.message || err));
+  } finally {
+    setIsGenerating(false);
+  }
+};
 
-      setStatus('Designing poster...');
-
-      const payloadForAI = {
-        ...formData,
-        backgroundImage: formData.backgroundImage,
-        backgroundMode: formData.backgroundMode,
-        product_analysis: productAnalysis
-      };
-
-      console.log("🔍 FINAL formData BEFORE generate:", payloadForAI);
-
-      const layoutResp = await generateLayout(
-        uploadedImage.nobg_filename,
-        uploadedLogo?.nobg_filename || null,
-        payloadForAI
-      );
-
-      setLayouts(layoutResp);
-      setSelectedRatio('1:1');
-      setRenderTrigger((t) => t + 1);
-      setStatus('Poster generated! Choose a ratio to preview.');
-
-    } catch (err) {
-      console.error(err);
-      setStatus('Error: ' + (err.message || err));
-    } finally {
-      setIsGenerating(false);
-    }
-  };
 
   const ratios = ['1:1', '9:16', '1.9:1'];
   

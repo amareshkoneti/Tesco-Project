@@ -3,6 +3,7 @@ from PIL import Image
 from rembg import remove
 import io
 
+
 class ImageProcessor:
     """Handle image processing operations"""
     

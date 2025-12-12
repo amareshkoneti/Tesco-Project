@@ -9,7 +9,7 @@ const PreviewPanel = ({ layout, selectedRatio, isGenerating }) => {
     switch (selectedRatio) {
       case '1:1': return { width: 1080, height: 1080 };
       case '9:16': return { width: 1080, height: 1920 };
-      case '1.9:1': return { width: 1200, height: 628 };
+      case '1.9:1': return { width: 1200, height: 628};
       default: return { width: 1080, height: 1080 };
     }
   };

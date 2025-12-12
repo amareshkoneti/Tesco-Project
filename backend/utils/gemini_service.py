@@ -1,9 +1,9 @@
 import json
 import re
 import google.generativeai as genai
-from PIL import Image
-import os
 import random
+import mimetypes
+from PIL import Image
 
 class GeminiService:
     """Handle all Gemini AI operations"""
@@ -12,7 +12,7 @@ class GeminiService:
         self.api_key = api_key
         if api_key:
             genai.configure(api_key=api_key)
-            self.model = genai.GenerativeModel('gemma-3-27b-it')
+            self.model = genai.GenerativeModel('gemini-3-27b-it')
         else:
             self.model = None
     
@@ -20,41 +20,62 @@ class GeminiService:
         """Check if Gemini is properly configured"""
         return self.model is not None
     
+
     def analyze_product_image(self, image_path):
-        """Analyze product image and provide insights"""
+        """Analyze product image and provide insights + objects for compliance using multimodal Gemini"""
         if not self.is_configured():
             return self._fallback_analysis()
-        
+
         try:
+            # Open image with PIL
             img = Image.open(image_path)
-            
-            prompt = """Analyze this product image and provide design recommendations in JSON format.
 
-Return ONLY a valid JSON object with this structure:
-{
-  "product_type": "brief description of the product",
-  "dominant_colors": ["#color1", "#color2", "#color3"],
-  "background_suggestion": "#hexcolor",
-  "style_recommendation": "modern|bold|minimal|vibrant",
-  "positioning_advice": "brief advice on how to position this product"
-}
+            # Prompt instructing Gemini to return only JSON
+            prompt = """
+            Analyze this product image. Return ONLY a valid JSON object with the following structure:
 
-Be concise and return only the JSON."""
+            {
+                "product_type": "brief description of the product",
+                "objects": [
+                    {
+                        "label": "...",      # name of the detected object
+                        "confidence": 0.95,  # optional
+                        "bbox": [x1, y1, x2, y2]  # optional, from object detection
+                    },
+                    ...
+                ]
+            }
 
-            # Keep the image part simple; some SDKs accept binary attachments differently.
-            response = self.model.generate_content(prompt)
+            Detect all visible objects including products, packshots, people, bottles, glasses, and logos.
+            Be concise and return only JSON.
+            """
+            self.model = genai.GenerativeModel('gemini-2.5-flash-lite')
+            response = self.model.generate_content(
+                [prompt, img],
+                generation_config=genai.types.GenerationConfig(
+                    temperature=1.0,
+                    top_p=0.95,
+                    max_output_tokens=4000,
+                )
+            )
+
+            # Extract JSON from the model's output
             analysis = self._extract_json(response.text)
-            
+
+            # Ensure objects key exists
             if analysis:
+                if "objects" not in analysis:
+                    analysis["objects"] = []
                 return analysis
             else:
+                print("Gemini returned no valid JSON. Using fallback.")
                 return self._fallback_analysis()
-        
+
         except Exception as e:
-            print(f"Gemini analysis error: {str(e)}")
+            print(f"Gemini analysis error: {e}")
             return self._fallback_analysis()
     
-    def generate_layout(self, canvas, form_data, product_analysis=None, has_logo=False, image_url=None, logo_url=None, background_image_url=None):
+    def generate_layout(self, canvas, form_data, has_logo=False, image_url=None, logo_url=None, background_image_url=None):
         """
         Generate a layout. If background_image_url is provided, instruct Gemini to use it as the canvas background.
         Otherwise use the background color provided in form_data (bgColor).
@@ -64,31 +85,9 @@ Be concise and return only the JSON."""
 
         try:
             w, h = canvas['width'], canvas['height']
-            prod_type = (product_analysis or {}).get("product_type", "product")
-            prod_colors = (product_analysis or {}).get("dominant_colors", ["#000000", "#FFFFFF"])
+            print(form_data)
             bg_mode = form_data.get('backgroundMode') or ('image' if background_image_url else 'color')
             bg_color = form_data.get('bgColor', '#FFFFFF')
-            tag_shapes = [
-                "rectangle",
-                "square",
-                "circle",
-                "oval",
-                "rounded_rectangle",
-                "tag",
-                "ticket",
-                "hexagon",
-                "pentagon",
-                "octagon",
-                "starburst",
-                "star",
-                "badge",
-                "shield",
-                "banner",
-                "ribbon",
-                "pill",
-                "price_chip",
-                "sunburst",
-            ]
 
             # Build explicit instructions for background usage
             if background_image_url:
@@ -100,16 +99,68 @@ Be concise and return only the JSON."""
             print(f"Generating layout with bg_mode: {bg_mode}, bg_instruction: {bg_instruction}")
             print(background_image_url)
 
-            prompt = f""" Use these inputs to generate a creative HTML poster layout in {w}:{h} ratio:
-Product = {image_url}, Logo = {logo_url if has_logo else 'none'}, Headline = {form_data.get('headline')}, Subheadline = {form_data.get('subheadline')}, Price = {form_data.get('price')}, Offer = {form_data.get('offer')}, 
-Description = {form_data.get('description')}, Background Mode = {bg_mode}, Background Instruction = {bg_instruction}.
-Create a complete standalone HTML file with inline CSS, canvas EXACTLY {w}px × {h}px.
-Product should occupy 60% of area, logo 70% of product size at top-left/right, no overlapping, maintain 40px spacing and 5% safe zone.
-Use {random.choice(tag_shapes)} shape for Price, Use {random.choice(tag_shapes)} shape for Offer.
-Use absolute positioning, bold high-contrast fonts, creative shapes, use Google Fonts and check carefully that no elements overlap.
-Create a visually Good looking poster and be creative as hell while design in each part in poser. Output ONLY the final HTML from <!DOCTYPE html> to </html>.
-"""
+            prompt = f""" You are generating Tesco Retail Media banners that MUST pass strict compliance checks. Follow these rules exactly — no exceptions on restricted elements.
+
+                Inputs:
+                - Product Image URL: {image_url}
+                - Logo URL: {logo_url if has_logo else 'none'}
+                - Headline: {form_data.get('headline')}
+                - Subheadline: {form_data.get('subheadline')}
+                - Regular Price: {form_data.get('price')}
+                - Offer (Clubcard price): {form_data.get('offer')}  // if present, trigger Clubcard tile
+                - Description/Tag: {form_data.get('description')}
+                - Background Instruction: {bg_instruction}
+                - Canvas Size: Exactly {w}px × {h}px
+
+                STRICT COMPLIANCE RULES (MUST FOLLOW):
+                1. VALUE TILE (CRITICAL):
+                - If Offer is provided: Use ONLY the official flat Clubcard Prices tile.
+                    - Left: Blue rectangle (#00539F background, white bold text "Clubcard Prices")
+                    - Right: Yellow rectangle (#FFD700 background, large bold black Offer price)
+                    - Smaller regular Price shown secondary (above/below or struck-through)
+                    - Fixed position (e.g. bottom-right), no overlap, no custom shapes, circles, stars, or badges.
+                - If no Offer: Use simple predefined White tile for single Price, or New badge if applicable.
+                - Nothing can overlap the value tile. Position and size cannot be changed.
+
+                2. TESCO TAG (Description field):
+                - If Clubcard tile is used: MUST display exactly:
+                    "Available in selected stores. Clubcard/app required. Ends 31/01"
+                - Otherwise: Use one of: "Only at Tesco", "Available at Tesco", "Selected stores. While stocks last."
+                - Place at bottom, clear font, no overlap.
+
+                3. LAYOUT:
+                - Headline & Subheadline: Bold, high-contrast, min 20px font (use Google Fonts: Bebas Neue or Montserrat).
+                - Packshot: Large central (~60% area), lead product.
+                - Logo: Top-right if present, good size, no overlap.
+                - For 9:16 formats (1080x1920): Keep top 200px and bottom 250px free of text/logos/value tiles.
+                - Background: Follow background instruction creatively (gradients, textures, overlays for legibility) but keep base color/image visible.
+
+                4. ACCESSIBILITY:
+                - All text min 20px, high contrast (WCAG AA compliant).
+
+                ABSOLUTE RESTRICTION (DO NOT VIOLATE):
+
+                ❌ NEVER include prices, numbers, percentages, discounts, currency symbols,
+                    or price-like wording in the Headline or Subheadline.
+
+                ❌ Do NOT restate or paraphrase the price or offer in any form.
+
+                ❌ Even if the user inputs a headline/subheadline containing a price,
+                    you MUST REMOVE it and output a safe version WITHOUT any numeric value.
+
+
+                Forbidden examples:
+                - "Only £4.99"
+                - "Save 20%"
+                - "£3 off"
+                - "£2.50 each"
+
+                Be visually creative and attractive within these constraints — enhance background, text styling, spacing, and composition — but never deviate from the predefined Clubcard tile, tag text, or restricted copy.
+
+                Output ONLY a complete standalone HTML file with inline CSS from <!DOCTYPE html> to </html>. Enforce exact canvas size with overflow: hidden.
+            """
             
+            self.model = genai.GenerativeModel('gemma-3-27b-it')
             response = self.model.generate_content(
                 prompt,
                 generation_config=genai.types.GenerationConfig(
