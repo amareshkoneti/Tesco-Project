@@ -8,7 +8,6 @@ from bs4 import BeautifulSoup
 
 
 # Simple local fallback checks (fast, catches obvious failures)
-ALCOHOL_KEYWORDS = {"alcohol","beer","wine","vodka","whisky","whiskey","rum","gin","cider","liquor","champagne"}
 PRICE_KEYWORDS = {"discount","save","% off","was £","now £"}
 COPY_HARD_FAIL_KEYWORDS = {
     "t&c","t&cs","terms and conditions","win","prize","competition",
@@ -29,14 +28,7 @@ class ComplianceChecker:
         - Detect disallowed copy tokens (global) but ignore text inside allowed tiles.
         - Detect price-like tokens and ensure they appear ONLY inside allowed value-tile elements.
         Returns: None if no quick-fail found, otherwise a dict {passed:False, reason:..., details: [...]}
-        """
-        # 1) objects check (unchanged)
-        labels = [ (o.get("label","") or "").lower() for o in (objects or []) ]
-        for lbl in labels:
-            for kw in ALCOHOL_KEYWORDS:
-                if kw in lbl:
-                    return {"passed": False, "reason": f"Detected restricted object '{lbl}' (keyword={kw})"}
-
+        """        
         # prepare soup
         try:
             soup = BeautifulSoup(html_content or "", "html.parser")

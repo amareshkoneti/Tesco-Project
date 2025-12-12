@@ -245,7 +245,8 @@ def generate_layout():
             has_logo=(logo_filename is not None),
             image_url=image_url,
             logo_url=logo_url,
-            background_image_url=background_image_url
+            background_image_url=background_image_url,
+            objects = product_analysis.get("objects", [])
         )        
         print("Layout 1 generated: ", layout_1)
         checker = ComplianceChecker(gemini_service)   # pass your gemini instance so it uses the configured key
@@ -272,13 +273,14 @@ def generate_layout():
 
         print("generating layout with canvas size:", canvas_2)
 
-        layout_2 = gemini_service.generate_layout(
+        '''layout_2 = gemini_service.generate_layout(
             canvas=canvas_2,
             form_data=data,
             has_logo=(logo_filename is not None),
             image_url=image_url,
             logo_url=logo_url,
-            background_image_url=background_image_url
+            background_image_url=background_image_url,
+            objects = product_analysis.get("objects", [])
         )
 
         print("generating layout with canvas size:", canvas_3)
@@ -289,10 +291,11 @@ def generate_layout():
             has_logo=(logo_filename is not None),
             image_url=image_url,
             logo_url=logo_url,
-            background_image_url=background_image_url
-        )
+            background_image_url=background_image_url,
+            objects = product_analysis.get("objects", [])
+        )'''
 
-        return jsonify({"success": True, "layout_1": layout_1, "layout_2": layout_2, "layout_3": layout_3})
+        return jsonify({"success": True, "layout_1": layout_1, "layout_2": layout_1, "layout_3": layout_1})
 
     except Exception as e:
         import traceback

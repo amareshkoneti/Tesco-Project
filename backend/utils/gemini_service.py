@@ -1,9 +1,8 @@
 import json
 import re
 import google.generativeai as genai
-import random
-import mimetypes
 from PIL import Image
+from typing import List, Dict, Any
 
 class GeminiService:
     """Handle all Gemini AI operations"""
@@ -75,7 +74,7 @@ class GeminiService:
             print(f"Gemini analysis error: {e}")
             return self._fallback_analysis()
     
-    def generate_layout(self, canvas, form_data, has_logo=False, image_url=None, logo_url=None, background_image_url=None):
+    def generate_layout(self, canvas, form_data, has_logo=False, image_url=None, logo_url=None, background_image_url=None,objects: List[Dict[str,Any]] = None):
         """
         Generate a layout. If background_image_url is provided, instruct Gemini to use it as the canvas background.
         Otherwise use the background color provided in form_data (bgColor).
@@ -84,6 +83,9 @@ class GeminiService:
             return self._fallback_layout(canvas, form_data, has_logo, background_image_url)
 
         try:
+            objects = objects or []
+            detected_objects_text = "\n".join([f"- {o.get('label','').strip()}" for o in objects]) or "- (none detected)"
+
             w, h = canvas['width'], canvas['height']
             print(form_data)
             bg_mode = form_data.get('backgroundMode') or ('image' if background_image_url else 'color')
@@ -111,17 +113,22 @@ class GeminiService:
                 - Description/Tag: {form_data.get('description')}
                 - Background Instruction: {bg_instruction}
                 - Canvas Size: Exactly {w}px × {h}px
+                - Detected objects: {detected_objects_text}
 
                 STRICT COMPLIANCE RULES (MUST FOLLOW):
                 1. VALUE TILE (CRITICAL):
-                - If Offer is provided: Use ONLY the official flat Clubcard Prices tile.
-                    - Left: Blue rectangle (#00539F background, white bold text "Clubcard Prices")
-                    - Right: Yellow rectangle (#FFD700 background, large bold black Offer price)
-                    - Smaller regular Price shown secondary (above/below or struck-through)
-                    - Fixed position (e.g. bottom-right), no overlap, no custom shapes, circles, stars, or badges.
-                - If no Offer: Use simple predefined White tile for single Price, or New badge if applicable.
-                - Nothing can overlap the value tile. Position and size cannot be changed.
-
+                - If Offer is provided:
+                    - Use the official Clubcard tile, side-by-side style.
+                    - Left: Blue rectangle with text "Clubcard Prices"(#457EB2)
+                    - Right: Yellow rectangle with Offer price (#ffed21)
+                    - both rectangles must occupy full height of tile, no gaps. and both rectangles must be same size.
+                    - Regular Price must be included **inside the right rectangle**, smaller
+                    - Add Tesco tag: "Available in selected stores. Clubcard/app required. Ends DD/MM"
+                - If no Offer:
+                    - Use predefined White tile
+                    - Only single price editable
+                    - Add Tesco tag depending on exclusivity: "Only at Tesco", "Available at Tesco", or "Selected stores. While stocks last"
+                    - Place tile strictly at bottom-right, no overlap, clear font.
                 2. TESCO TAG (Description field):
                 - If Clubcard tile is used: MUST display exactly:
                     "Available in selected stores. Clubcard/app required. Ends 31/01"
@@ -137,8 +144,15 @@ class GeminiService:
 
                 4. ACCESSIBILITY:
                 - All text min 20px, high contrast (WCAG AA compliant).
+                - No elements overlapping.
+                - Size of everything proportional to canvas size and clearly legible.
 
                 ABSOLUTE RESTRICTION (DO NOT VIOLATE):
+                ❌ if ditected objects include alcohol, alcoholic beverages, or related items, poster MUST include a Drinkaware lock-up.
+                    drinkaware logo is not a image URL, you must generate.
+                    Drink-aware look-up should be in pure black or pure white according to back ground colour.
+                    make sure it does not overlap with any other elements and value tile.
+                    Place it middle-left or middle-right, size must be 50% of product size.
 
                 ❌ NEVER include prices, numbers, percentages, discounts, currency symbols,
                     or price-like wording in the Headline or Subheadline.
