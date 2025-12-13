@@ -3,6 +3,7 @@ import ImageUpload from './components/ImageUpload';
 import ContentForm from './components/ContentForm';
 import DesignControls from './components/DesignControls';
 import PreviewPanel from './components/PreviewPanel';
+import CompliancePanel from './components/CompliancePanel';
 import { uploadImage, uploadLogo, analyzeImage, generateLayout } from './services/api';
 
 function App() {
@@ -13,7 +14,7 @@ function App() {
     price: '£4.99',
     offer: 'Special Offer',
     primaryColor: '#FFD700',
-    secondaryColor: '#000000',
+    secondaryColor: '#000000ff',
     accentColor: '#8B4513',
     backgroundMode: 'color',
     bgColor: '#87CEEB',
@@ -34,6 +35,9 @@ function App() {
   const [selectedRatio, setSelectedRatio] = useState('1:1');
   const [poster, setPoster] = useState(null);
   const canvasRef = useRef(null);
+  const [complianceResult, setComplianceResult] = useState(null);
+  const [productType, setProductType] = useState(null);
+
 
   // -------------------------------
   // PRODUCT IMAGE UPLOAD
@@ -46,7 +50,14 @@ function App() {
       setUploadedImage(result);
       setStatus('Product image uploaded! Background removed.');
       setStatus('AI analyzing image...');
-      await analyzeImage(result.nobg_filename);
+      const analysisResp = await analyzeImage(result.nobg_filename);
+      console.log("Analysis response:", analysisResp);
+
+      setProductType(
+        analysisResp.product_type ||
+        analysisResp.analysis?.product_type ||
+        "Unknown product"
+      );
       setStatus('Analysis complete!');
     } catch (error) {
       setStatus('Upload failed: ' + error.message);
@@ -128,11 +139,16 @@ function App() {
 
     const layoutResp = await generateLayout(payloadForAI);
 
+    if (layoutResp.compliance) {
+      setComplianceResult(layoutResp.compliance);
+    } else {
+      setComplianceResult(null);
+    }
+
     if (!layoutResp.success) {
       // Compliance failed
-      console.error("Compliance failed:", layoutResp.compliance);
-      setStatus(`❌ Poster blocked: ${layoutResp.error}`);
-      alert("Poster failed compliance rules. Check console for details.");
+      setStatus(`❌ ${layoutResp.error}`);
+      setLayouts(null); // no layouts generated
       return;
     }
 
@@ -194,6 +210,18 @@ function App() {
               <div className="glass-card mb-4 p-4">
                 <h5 className="fw-bold text-white mb-4">Product Image</h5>
                 <ImageUpload onImageSelect={handleImageSelect} label="Drop your packshot here" />
+                {productType && (
+                    <div
+                      className="mt-3 px-3 py-2 rounded-3 text-white"
+                      style={{
+                        background: 'rgba(255,255,255,0.18)',
+                        fontSize: '0.95rem',
+                        lineHeight: 1.4
+                      }}
+                    >
+                      <strong>Detected product:</strong> {productType}
+                    </div>
+                  )}
               </div>
 
               {/* LOGO UPLOAD */}
@@ -248,20 +276,16 @@ function App() {
 
           {/* RIGHT SIDE PREVIEW */}
           <div className="col-lg-7 text-center">
-            {layouts && uploadedImage ? (
+            {layouts ? (
               <>
-                {/* RATIO SELECTION BUTTONS */}
+                {/* RATIO BUTTONS */}
                 <div className="mb-3">
-                  <div className="btn-group" role="group">
+                  <div className="btn-group">
                     {ratios.map((r) => (
                       <button
                         key={r}
-                        type="button"
                         className={`btn ${selectedRatio === r ? 'btn-primary' : 'btn-outline-primary'}`}
-                        onClick={() => {
-                          console.log('Button clicked, changing ratio to:', r);
-                          setSelectedRatio(r);
-                        }}
+                        onClick={() => setSelectedRatio(r)}
                       >
                         {r}
                       </button>
@@ -270,13 +294,13 @@ function App() {
                 </div>
 
                 <PreviewPanel
-                  key={selectedRatio}
                   layout={getLayoutByRatio(selectedRatio)}
                   selectedRatio={selectedRatio}
                   isGenerating={isGenerating}
-                  formData={formData}
                 />
               </>
+            ) : complianceResult ? (
+              <CompliancePanel compliance={complianceResult} />
             ) : (
               <div className="preview-placeholder">Upload an image to get started</div>
             )}

@@ -1,6 +1,4 @@
 import os
-import base64
-import json
 from datetime import datetime
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
@@ -9,11 +7,16 @@ from dotenv import load_dotenv
 from utils.image_processor import ImageProcessor
 from utils.gemini_service import GeminiService
 from utils.compliance_checker import ComplianceChecker
+from utils.palette_db import init_palette_db
+from utils.palette_routes import palette_bp
+from utils.palette_db import get_db
 
 
 load_dotenv()
 
 app = Flask(__name__)
+init_palette_db()
+
 
 # CORS configuration - allow React frontend
 CORS(app, resources={
@@ -29,6 +32,8 @@ CORS(app, resources={
     }
 })
 
+app.register_blueprint(palette_bp)
+
 # Configuration
 app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['MAX_CONTENT_LENGTH'] = int(os.getenv('MAX_CONTENT_LENGTH', 32 * 1024 * 1024))
@@ -39,7 +44,7 @@ os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 # Initialize services
 image_processor = ImageProcessor()
-gemini_service = GeminiService("AIzaSyCo9I92heMzGtIDRAZuHzkri-bTdYwsr8M")
+gemini_service = GeminiService("")
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -231,7 +236,25 @@ def generate_layout():
             if background_image_filename else None
 
         print("Background filename:", background_image_filename)        # ← debug
-        print("Background URL:", background_image_url)                  # ← should now show real URL
+        print("Background URL:", background_image_url)    
+        
+        conn = get_db()
+        conn.execute("""
+            INSERT INTO color_palettes
+            (primary_color, secondary_color, accent_color, bg_color, usage_count)
+            VALUES (?, ?, ?, ?, 1)
+            ON CONFLICT(primary_color, secondary_color, accent_color, bg_color)
+            DO UPDATE SET usage_count = usage_count + 1
+        """, (
+            data.get("primaryColor"),
+            data.get("secondaryColor"),
+            data.get("accentColor"),
+            data.get("bgColor")
+        ))
+        conn.commit()
+        conn.close()
+        print("Saved Colour Palette.")   
+        
         # Canvas sizes
         canvas_1 = {'width': 1080, 'height': 1080} 
         canvas_2 = {'width': 1080, 'height': 1920}
@@ -261,17 +284,19 @@ def generate_layout():
             }
         )
 
+        print("Compliance check", compliance_report)
+
         # compliance_report expected shape: { "passed": bool, "reason": "...", "details": [...] }
         if not compliance_report.get("passed", False):
-            print("Compliance check failed:", compliance_report)
+           
             return jsonify({
                 "success": False,
                 "error": "Poster failed compliance rules",
                 "compliance": compliance_report
             }), 400
-                
+        
 
-        print("generating layout with canvas size:", canvas_2)
+        '''print("generating layout with canvas size:", canvas_2)
 
         layout_2 = gemini_service.generate_layout(
             canvas=canvas_2,
@@ -293,9 +318,9 @@ def generate_layout():
             logo_url=logo_url,
             background_image_url=background_image_url,
             objects = product_analysis.get("objects", [])
-        )
+        )'''
 
-        return jsonify({"success": True, "layout_1": layout_1, "layout_2": layout_2, "layout_3": layout_3})
+        return jsonify({"success": True, "layout_1": layout_1, "layout_2": layout_1, "layout_3": layout_1})
 
     except Exception as e:
         import traceback

@@ -1,16 +1,36 @@
 import React from 'react';
 import ImageUpload from './ImageUpload';
+import PaletteSuggestions from "./PaletteSuggestions";
 
 function DesignControls({ formData, setFormData, onBgImageSelect }) {
   const handleChange = (field, value) => {
     setFormData({ ...formData, [field]: value });
   };
 
+  const normalizeHex = (hex) => {
+    if (!hex) return "#000000";
+      return hex.length === 9 ? hex.slice(0, 7) : hex;
+    };
+
+
+  const applyPalette = (palette) => {
+  setFormData({
+    ...formData,
+    primaryColor: normalizeHex(palette.primary_color),
+    secondaryColor: normalizeHex(palette.secondary_color),
+    accentColor: normalizeHex(palette.accent_color),
+    bgColor: normalizeHex(palette.bg_color),
+  });
+};
+
+
+
 
   return (
     <div>
 
       <div className="mb-3">
+        <PaletteSuggestions onApply={applyPalette} />
         <label className="form-label fw-semibold">Brand Colors</label>
         <div className="row g-2">
           <div className="col-6">

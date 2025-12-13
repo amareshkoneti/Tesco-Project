@@ -33,6 +33,26 @@ export const analyzeImage = async (filename) => {
 };
 
 export const generateLayout = async (payload) => {
-  const response = await axios.post(`${API_BASE}/api/generate-layout`, payload);
+  try {
+    const response = await axios.post(
+      `${API_BASE}/api/generate-layout`,
+      payload
+    );
+    return response.data;
+  } catch (err) {
+    // 🔑 VERY IMPORTANT: return backend JSON even on 400
+    if (err.response && err.response.data) {
+      return err.response.data;
+    }
+    throw err;
+  }
+};
+
+// ---------- Color Palette APIs ----------
+
+export const getFrequentPalettes = async () => {
+  const response = await axios.get(`${API_BASE}/api/palettes/frequent`);
   return response.data;
 };
+
+

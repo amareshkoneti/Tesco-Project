@@ -50,13 +50,24 @@ class ComplianceChecker:
         price_regex = re.compile(
             r"(?:£|\$|€|₹)\s?\d{1,3}(?:[,\d{3}])*(?:\.\d{1,2})?|"      # £1,234.56 or $12.99
             r"\d{1,3}(?:[,\d{3}])*(?:\.\d{1,2})?\s?(?:GBP|USD|EUR|INR)\b|" # 12.99 GBP
-            r"\d{1,3}%\b|"                                              # 20%
-            r"\b(?:was|now|save|off)\s+\d{1,3}",                        # "save 20" heuristics
+            r"\d{1,3}\s*%"                                              # 20%
+            r"\b(?:was|now|save|off)\s+\d{1,3}"
+            r"\b(?:discount|% off|off)\b",                        # "save 20" heuristics
             re.IGNORECASE
         )
 
         # Allowed containers (if price found inside any of these ancestors, consider it allowed)
-        ALLOWED_VALUE_TILE_CLASSES = {"value-tile", "clubcard-side", "offer-side", "value-price", "clubcard", "price-tile", "white-tile"}
+        ALLOWED_VALUE_TILE_CLASSES = {
+            "value-tile",
+            "clubcard-side",
+            "clubcard-left",
+            "clubcard-right",
+            "offer-side",
+            "value-price",
+            "clubcard",
+            "price-tile",
+            "white-tile"
+        }
         def is_within_allowed_tile(node):
             # node may be NavigableString or Tag; get parent tag
             parent = node.parent if hasattr(node, "parent") else None
@@ -146,7 +157,7 @@ class ComplianceChecker:
 
         # 1) quick local checks to fail-fast on obvious infractions
         local = self._simple_local_check(html_content, objects, assets)
-        if local is not None:
+        if local['passed'] is False:
             return local
 
         # 2) Compose a deterministic prompt for Gemini using the official TRM rules
@@ -155,53 +166,70 @@ class ComplianceChecker:
         user_inputs_text = json.dumps(assets.get("user_inputs", {}))
         format_text = json.dumps(assets.get("format", {}))
 
-        rules_summary = """
-        APPLY THE FOLLOWING RULES (STRICT):
-        1) Alcohol: If alcohol appears in imagery (bottles/labels) the poster MUST include a Drinkaware lock-up in either pure black or pure white and minimum 20px height (SAYS override 12px). If missing -> BLOCK.
-        2) Copy: No T&Cs, competitions, sustainability/green claims, charity claims, money-back guarantees, or any claim language. Any occurrence -> BLOCK.
-        3) Price text: Prices are allowed ONLY inside value tiles (Clubcard / White / New). 
-        Prices inside headline, subheadline, body copy, description or tags → BLOCK.
-        4) Value tile: Allowed types are New, White, Clubcard. Nothing must overlap a value tile. Clubcard tile must be flat style. Wrong size/position -> BLOCK.
-        5) Packshots: 1-3 packshots allowed, exactly one must be lead=True. Packshot must be closest to CTA and minimum gap from CTA depends on density. Violations -> BLOCK.
-        6) CTA: Must exist, must exceed minimum area, must not be overlapped -> BLOCK.
-        7) Safe zone (9:16 / 1080x1920): top 200px and bottom 250px must be free of text, logos or value tiles -> BLOCK.
-        8) Accessibility: minimum font sizes per density; contrast ratio WCAG AA (4.5) for text -> BLOCK.
-        9) Drinkaware color: must be black or white; if color not pure -> WARN.
-        10) Logo: present and not too small -> BLOCK if missing when required.
-        11) Pinterest: requires tag -> BLOCK if missing.
-        """
-
         prompt = f"""
-        You are a compliance engine for retail media creatives. You will receive:
-        1) The final poster HTML (do NOT render, analyze the DOM/inline styles and text).
-        2) A list of detected objects from the product image.
-        3) Additional metadata (user_inputs, format).
+            You are a retail media creative compliance engine. You will receive:
+            1) Final poster HTML (analyze DOM/inline styles/text; do NOT render)
+            2) Detected objects from product image
+            3) Metadata (user_inputs, format)
 
-        HTML CONTENT:
-        {html_content}
+            HTML CONTENT:
+            {html_content}
 
-        Detected objects:
-        {detected_objects_text}
+            Detected objects:
+            {detected_objects_text}
 
-        User inputs:
-        {user_inputs_text}
+            User inputs:
+            {user_inputs_text}
 
-        Format metadata:
-        {format_text}
+            Format metadata:
+            {format_text}
 
-        RULES TO APPLY:
-        {rules_summary}
+            --------------------------------
+            RULES
+            --------------------------------
+            1) ALCOHOL / DRINKAWARE
+            - Alcohol detected or related beverages present in detected objects → Drinkaware lock-up must be present
+            - Missing/invalid → FAIL
 
-        TASK:
-        1) Analyze the HTML and the detected_objects.
-        2) For each rule above, state whether the poster PASSES or FAILS and WHY.
-        3) If any hard-fail is present, respond with JSON: {{ "passed": false, "reason": "short reason", "details": [ ... ] }}
-        4) If clean, respond with {{ "passed": true, "reason": "OK", "details": [ ... ] }}
+            2) PRICE TEXT
+            - Currency only in value/clubcard tile; multiple allowed
+            - No Offers should be present inside value/clubcard tile. ONLY Currency and Price related text allowed(eg: £4.99, $30).
+            - Percentages never allowed in any part of poster
+            - Currency outside tile → FAIL
 
-        IMPORTANT:
-        - Output must be valid JSON (no extra text).
-        - Keep "details" an array of objects like {{ "rule": "<rule-name>", "result": "pass|fail|warn", "explain": "..." }}.
-        """
+            3) VALUE TILE (DESIGN)
+            - Allowed types: New, White, Clubcard
+            - No overlap; Clubcard must be flat
+            - Wrong type/size/position → FAIL
+
+            4) PACKSHOTS
+            - Max 3 images are allowed in poster; exactly 1 lead shot required.
+            - Do Not count Detected objects; count only actual <img> tags in HTML.
+            - Violations → FAIL
+
+            5) ACCESSIBILITY
+            - Min font sizes: Brand/Checkout double/Social 20px, Checkout single 10px, SAYS 12px
+            - WCAG AA contrast (4.5:1)
+            - Violations → FAIL
+
+            6) LOGO
+            - Must be present where required
+            - Missing/invalid → FAIL
+
+            IMPORTANT
+            - Treat "% off", "discount", "save", "was/now", "Offer" as PRICE TEXT if anything anything resembling a price is present in headline or subheadline -> Block
+            - Ignore HTML tags; check visible text only
+            - Ignore fine print at bottom
+
+            TASK
+            1) Analyze HTML + detected objects
+            2) For each rule, output PASS/FAIL + explanation
+            3) Hard-fail → JSON: {{ "passed": false, "reason": "...", "details": [ ... ] }}
+            4) Clean → JSON: {{ "passed": true, "reason": "OK", "details": [ ... ] }}
+
+            Output must be valid JSON only; "details" is array of {{ "rule": "<rule-name>", "result": "pass|fail|warn", "explain": "..." }}.
+            """
+
 
         # 3) Call Gemini
         # we send just the prompt (Gemini can also accept images but we rely on objects + html)
@@ -217,6 +245,7 @@ class ComplianceChecker:
             )
             text = response.text.strip()
 
+            print(text)
             # 4) Extract JSON from response robustly
             # Try direct load, then fenced block, then first {...}
             try:
