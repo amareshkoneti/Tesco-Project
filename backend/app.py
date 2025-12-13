@@ -39,7 +39,7 @@ os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 # Initialize services
 image_processor = ImageProcessor()
-gemini_service = GeminiService("")
+gemini_service = GeminiService("AIzaSyCo9I92heMzGtIDRAZuHzkri-bTdYwsr8M")
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -273,7 +273,7 @@ def generate_layout():
 
         print("generating layout with canvas size:", canvas_2)
 
-        '''layout_2 = gemini_service.generate_layout(
+        layout_2 = gemini_service.generate_layout(
             canvas=canvas_2,
             form_data=data,
             has_logo=(logo_filename is not None),
@@ -293,9 +293,9 @@ def generate_layout():
             logo_url=logo_url,
             background_image_url=background_image_url,
             objects = product_analysis.get("objects", [])
-        )'''
+        )
 
-        return jsonify({"success": True, "layout_1": layout_1, "layout_2": layout_1, "layout_3": layout_1})
+        return jsonify({"success": True, "layout_1": layout_1, "layout_2": layout_2, "layout_3": layout_3})
 
     except Exception as e:
         import traceback
