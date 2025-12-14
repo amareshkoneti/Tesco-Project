@@ -36,9 +36,9 @@ The **AI-Powered Retail Media Creative Builder & Compliance Engine** is a cuttin
 Empower **non-expert advertisers** to design, validate, and export campaign-ready creatives that comply with strict **retailer guidelines** and **brand identity constraints**, while maintaining creative freedom within safe, controlled boundaries.
 
 ### 💡 Why This Matters
-- **85%** reduction in creative production time
-- **70%** cost savings compared to traditional agency workflows
-- **100%** compliance validation before submission
+- Reduction in creative production time
+- Cost savings compared to traditional agency workflows
+- Compliance validation before submission
 - **Zero** technical expertise required
 
 ---
@@ -169,7 +169,7 @@ Our platform leverages **Google Gemini AI** and advanced computer vision to prov
 - **Prompt Engineering** - Optimized AI interactions
 - **OpenCV** - Computer vision processing
 - **Image Analysis** - Deep learning-based image understanding
-- **Rule-Based Compliance Engine** - Custom validation logic
+- **AI Powered Compliance Engine** - Utilized Gemini for Validating Compilance rules
 
 ### **Database**
 - **SQLite** - Lightweight relational database for palette storage
@@ -200,7 +200,7 @@ cd Tesco-Project
 
 ### Step 2: Get Gemini API Key
 
-1. Visit [Google AI Studio](https://makersuite.google.com/app/apikey)
+1. Visit [Google AI Studio](https://aistudio.google.com/api-keys)
 2. Sign in with your Google account
 3. Click **"Create API Key"**
 4. Copy your API key
