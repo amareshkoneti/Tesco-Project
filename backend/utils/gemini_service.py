@@ -149,12 +149,12 @@ class GeminiService:
 
                 5. Drinkaware Lock-up:(MUST FOLLOW)
                 - If detected objects include alcohol, alcoholic beverages, or related items, poster MUST include a Drinkaware lock-up.
-                ABSOLUTE RESTRICTION (DO NOT VIOLATE):
-                ❌ Drinkaware logo is not a image URL, you must generate.
-                    Drink-aware look-up should be in pure black or pure white according to back ground colour.
-                    Make sure it does not overlap with any other elements and value tile.
-                    Place it middle-left or middle-right, size must be 50% of product size.
+                - Drinkaware logo is not a image URL, you must generate.
+                - Drink-aware look-up should be in pure black or pure white according to back ground colour.
+                - Make sure it does not overlap with any other elements and value tile.
+                - Place it middle-left or middle-right, size must be 50% of product size.
 
+                ABSOLUTE RESTRICTION (DO NOT VIOLATE):
                 ❌ NEVER include prices, numbers, percentages, discounts, currency symbols,
                     or price-like wording in the Headline or Subheadline.
 

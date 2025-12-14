@@ -2,7 +2,7 @@ const CompliancePanel = ({ compliance }) => {
       return (
         <div className="card p-4 text-start">
           <h5 className="text-danger fw-bold mb-3">
-            ❌ Compliance Failed
+            ❌ Compliance Failed... Try Generating Again
           </h5>
 
           <p className="mb-2">

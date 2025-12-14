@@ -192,8 +192,8 @@ class ComplianceChecker:
             - Missing/invalid → FAIL
 
             2) PRICE TEXT
-            - Currency only in value/clubcard tile; multiple allowed
-            - No Offers should be present inside value/clubcard tile. ONLY Currency and Price related text allowed(eg: £4.99, $30).
+            - Currency only in value/clubcard tile;Both ORIGINAL AND OFFER price CAN be PRESENT in value/culbcard tile.
+            - No Offers related text (except OFFER PRICE) should be present inside value/clubcard tile. ONLY Currency and Price related text allowed(eg: £4.99, $30).
             - Percentages never allowed in any part of poster
             - Currency outside tile → FAIL
 
@@ -202,22 +202,18 @@ class ComplianceChecker:
             - No overlap; Clubcard must be flat
             - Wrong type/size/position → FAIL
 
-            4) PACKSHOTS
-            - Max 3 images are allowed in poster; exactly 1 lead shot required.
-            - Do Not count Detected objects; count only actual <img> tags in HTML.
-            - Violations → FAIL
 
-            5) ACCESSIBILITY
+            4) ACCESSIBILITY
             - Min font sizes: Brand/Checkout double/Social 20px, Checkout single 10px, SAYS 12px
             - WCAG AA contrast (4.5:1)
             - Violations → FAIL
 
-            6) LOGO
+            5) LOGO
             - Must be present where required
             - Missing/invalid → FAIL
 
             IMPORTANT
-            - Treat "% off", "discount", "save", "was/now", "Offer" as PRICE TEXT if anything anything resembling a price is present in headline or subheadline -> Block
+            - Treat "% off", "discount", "save", "was/now", "Offer" as PRICE TEXT if anything anything resembling a price (except "Clubcard Prices") is present in headline or subheadline -> Block
             - Ignore HTML tags; check visible text only
             - Ignore fine print at bottom
 
