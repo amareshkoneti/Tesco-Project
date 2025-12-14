@@ -1,4 +1,4 @@
-# 🎨 AI-Powered Retail Media Creative Builder & Compliance Engine
+# 🎨 Retail Media Creative Builder Using Generative AI
 
 <div align="center">
 
