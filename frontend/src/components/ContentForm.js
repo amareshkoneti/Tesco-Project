@@ -1,5 +1,8 @@
+// frontend/src/components/ContentForm.js
+// Component for user to input/edit content fields
 import React from 'react';
 
+// Props: formData (object), setFormData (function)
 function ContentForm({ formData, setFormData }) {
   const handleChange = (field, value) => {
     setFormData({ ...formData, [field]: value });

@@ -1,4 +1,5 @@
 # utils/compliance_checker.py
+# import statements
 import json
 import re
 from typing import List, Dict, Any
@@ -15,12 +16,13 @@ COPY_HARD_FAIL_KEYWORDS = {
     "best","#1","guaranteed","free trial","money back guarantee"
 }
 
+# ComplianceChecker class
 class ComplianceChecker:
     def __init__(self, gemini_service: GeminiService = None):
         # If no GeminiService instance is passed, create one (use configured key)
         self.gemini = gemini_service or GeminiService(None)
 
-# Replace the old _simple_local_check(...) with this:
+    # Simple local checks to catch obvious infractions quickly
     def _simple_local_check(self, html_content: str, objects: List[Dict[str,Any]], assets: Dict[str,Any]):
         """
         Improved deterministic checks:
@@ -29,7 +31,7 @@ class ComplianceChecker:
         - Detect price-like tokens and ensure they appear ONLY inside allowed value-tile elements.
         Returns: None if no quick-fail found, otherwise a dict {passed:False, reason:..., details: [...]}
         """        
-        # prepare soup
+        # prepare HTML parsing using BeautifulSoup
         try:
             soup = BeautifulSoup(html_content or "", "html.parser")
         except Exception:
@@ -68,6 +70,8 @@ class ComplianceChecker:
             "price-tile",
             "white-tile"
         }
+
+        # Helper to check if a node is inside an allowed value-tile container
         def is_within_allowed_tile(node):
             # node may be NavigableString or Tag; get parent tag
             parent = node.parent if hasattr(node, "parent") else None
@@ -138,6 +142,7 @@ class ComplianceChecker:
             return {"passed": True, "reason": "OK (fast-checks)", "details": details}
         return None
 
+    # Main compliance check method
     def check_html(self, html_content: str, objects: List[Dict[str,Any]] = None, assets: Dict[str,Any] = None, timeout_s: int = 20) -> Dict[str,Any]:
         """
         Main entry point:
@@ -155,13 +160,14 @@ class ComplianceChecker:
         objects = objects or []
         assets = assets or {}
 
-        # 1) quick local checks to fail-fast on obvious infractions
+        # 1) First run simple local checks to catch obvious failures quickly
         local = self._simple_local_check(html_content, objects, assets)
+
+        # If local check fails, return immediately
         if local['passed'] is False:
             return local
 
         # 2) Compose a deterministic prompt for Gemini using the official TRM rules
-        # Note: rules come from your uploaded TRM Hackathon doc (Appendix A & B). Use them in the prompt. :contentReference[oaicite:1]{index=1}
         detected_objects_text = "\n".join([f"- {o.get('label','').strip()}" for o in objects]) or "- (none detected)"
         user_inputs_text = json.dumps(assets.get("user_inputs", {}))
         format_text = json.dumps(assets.get("format", {}))
@@ -228,7 +234,7 @@ class ComplianceChecker:
 
 
         # 3) Call Gemini
-        # we send just the prompt (Gemini can also accept images but we rely on objects + html)
+        # we send just the prompt (Gemini can also accept images but we rely on objects + html due to API constraints)
         try:
             model = self.gemini.model
             response = model.generate_content(

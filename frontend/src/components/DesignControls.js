@@ -1,17 +1,25 @@
+// frontend/src/components/DesignControls.js
+// Component for design controls: colors and background
+
 import React from 'react';
 import ImageUpload from './ImageUpload';
 import PaletteSuggestions from "./PaletteSuggestions";
 
+// Props: formData (object), setFormData (function), onBgImageSelect (function)
 function DesignControls({ formData, setFormData, onBgImageSelect }) {
+
+  // Handle changes to form data
   const handleChange = (field, value) => {
     setFormData({ ...formData, [field]: value });
   };
 
+  // Normalize hex color to #RRGGBB format
   const normalizeHex = (hex) => {
     if (!hex) return "#000000";
     return hex.length === 9 ? hex.slice(0, 7) : hex;
   };
 
+  // Apply a suggested palette to the form data
   const applyPalette = (palette) => {
     setFormData({
       ...formData,
@@ -25,7 +33,7 @@ function DesignControls({ formData, setFormData, onBgImageSelect }) {
   return (
     <>
       <div className="design-controls">
-        {/* Palette Suggestions */}
+        {/* Palette Suggestions from frequently used Palettes from users */}
         <div className="control-section">
           <PaletteSuggestions onApply={applyPalette} />
         </div>

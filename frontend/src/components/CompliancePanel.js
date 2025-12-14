@@ -1,3 +1,6 @@
+// frontend/src/components/CompliancePanel.js
+// Component to display compliance failure details
+
 const CompliancePanel = ({ compliance }) => {
       return (
         <div className="card p-4 text-start">

@@ -1,25 +1,30 @@
+# backend/utils/gemini_service.py
+# import necessary libraries
 import json
 import re
 import google.generativeai as genai
 from PIL import Image
 from typing import List, Dict, Any
 
+# GeminiService class to handle Gemini AI operations
 class GeminiService:
     """Handle all Gemini AI operations"""
     
+    # Initialize with API key
     def __init__(self, api_key):
         self.api_key = api_key
         if api_key:
             genai.configure(api_key=api_key)
-            self.model = genai.GenerativeModel('gemini-3-27b-it')
+            self.model = genai.GenerativeModel('gemini-3-27b-it') # default model is gemini-3-27b-it, we can use multimodal models as needed
         else:
             self.model = None
     
+    # Check if Gemini is configured
     def is_configured(self):
         """Check if Gemini is properly configured"""
         return self.model is not None
     
-
+    # Analyze product image using Gemini
     def analyze_product_image(self, image_path):
         """Analyze product image and provide insights + objects for compliance using multimodal Gemini"""
         if not self.is_configured():
@@ -48,7 +53,7 @@ class GeminiService:
             Detect all visible objects including products, packshots, people, bottles, glasses, and logos.
             Be concise and return only JSON.
             """
-            self.model = genai.GenerativeModel('gemini-2.5-flash-lite')
+            self.model = genai.GenerativeModel('gemini-2.5-flash-lite') # multimodal model for image + text analysis
             response = self.model.generate_content(
                 [prompt, img],
                 generation_config=genai.types.GenerationConfig(
@@ -66,6 +71,7 @@ class GeminiService:
                 if "objects" not in analysis:
                     analysis["objects"] = []
                 return analysis
+            # Fallback if no valid JSON
             else:
                 print("Gemini returned no valid JSON. Using fallback.")
                 return self._fallback_analysis()
@@ -74,15 +80,19 @@ class GeminiService:
             print(f"Gemini analysis error: {e}")
             return self._fallback_analysis()
     
+    # Generate layout using Gemini
     def generate_layout(self, canvas, form_data, has_logo=False, image_url=None, logo_url=None, background_image_url=None,objects: List[Dict[str,Any]] = None):
         """
         Generate a layout. If background_image_url is provided, instruct Gemini to use it as the canvas background.
         Otherwise use the background color provided in form_data (bgColor).
         """
+        # Check Gemini configuration
         if not self.is_configured():
             return self._fallback_layout(canvas, form_data, has_logo, background_image_url)
 
         try:
+
+            # Prepare detected objects text
             objects = objects or []
             detected_objects_text = "\n".join([f"- {o.get('label','').strip()}" for o in objects]) or "- (none detected)"
 
@@ -186,6 +196,7 @@ class GeminiService:
                 )
             )
 
+            # Extract HTML from response
             html = response.text.strip()
 
             # Clean up fenced codeblocks if present
@@ -212,7 +223,7 @@ class GeminiService:
             traceback.print_exc()
             return self._fallback_layout(canvas, form_data, has_logo, background_image_url)
 
-        
+    # Helper to extract JSON robustly 
     def _extract_json(self, text):
         """Robust JSON extraction from Gemini output"""
 
@@ -255,7 +266,7 @@ class GeminiService:
 
         return None
 
-
+    # Fallback analysis when Gemini fails
     def _fallback_analysis(self):
         """Return default analysis when Gemini fails"""
         return {
@@ -265,7 +276,8 @@ class GeminiService:
             "style_recommendation": "modern",
             "positioning_advice": "Center the product prominently"
         }
-
+    
+    # Fallback layout when Gemini fails
     def _fallback_layout(self, canvas, form_data, has_logo=False, background_image_url=None):
         """Return default layout when Gemini fails. Supports background image or color."""
         w = canvas['width']

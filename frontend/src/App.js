@@ -1,3 +1,5 @@
+// frontend/src/App.js
+// import necessary libraries and components
 import React, { useState, useRef } from 'react';
 import ImageUpload from './components/ImageUpload';
 import ContentForm from './components/ContentForm';
@@ -6,7 +8,10 @@ import PreviewPanel from './components/PreviewPanel';
 import CompliancePanel from './components/CompliancePanel';
 import { uploadImage, uploadLogo, analyzeImage, generateLayout } from './services/api';
 
+// Main App Component
 function App() {
+
+  // State variables
   const [formData, setFormData] = useState({
     headline: '',
     subheadline: '',
@@ -38,6 +43,7 @@ function App() {
   const [complianceResult, setComplianceResult] = useState(null);
   const [productType, setProductType] = useState(null);
 
+  // Handler for image selection and upload
   const handleImageSelect = async (file) => {
     setImageFile(file);
     setStatus('Uploading product image...');
@@ -60,6 +66,7 @@ function App() {
     }
   };
 
+  // Handler for logo selection and upload
   const handleLogoSelect = async (file) => {
     setLogoFile(file);
     setStatus('Uploading brand logo...');
@@ -72,6 +79,7 @@ function App() {
     }
   };
 
+  // Handler for background image upload
   const handleBgImageUpload = async (file) => {
     setBgFile(file);
     setStatus('Uploading background image...');
@@ -102,6 +110,7 @@ function App() {
     }
   };
 
+  // Handler to generate poster using AI
   const handleGenerate = async () => {
     if (!uploadedImage) {
       alert("Upload product image first");
@@ -155,8 +164,10 @@ function App() {
     }
   };
 
+  // Supported aspect ratios
   const ratios = ['1:1', '9:16', '1.9:1'];
 
+  // Get layout based on selected ratio
   const getLayoutByRatio = (ratio) => {
     switch (ratio) {
       case '1:1': return layouts?.layout_1;
@@ -246,6 +257,7 @@ function App() {
               <div className="sidebar-section">
                 <h3 className="sidebar-title">Assets</h3>
                 
+                {/* Product Image Upload */}
                 <div className="compact-card">
                   <div className="compact-header">
                     <span>Product</span>
@@ -262,6 +274,7 @@ function App() {
                   </div>
                 </div>
 
+                {/* Logo Upload */}
                 <div className="compact-card">
                   <div className="compact-header">
                     <span>Logo</span>
@@ -299,7 +312,7 @@ function App() {
 
             </div>
 
-            {/* CENTER - Preview Panel (Maximum Space) */}
+            {/* CENTER - Preview Panel */}
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
               {/* Header with Generate Button */}
               <div style={{
@@ -392,7 +405,7 @@ function App() {
                 </button>
               </div>
 
-              {/* Ratio Selector */}
+              {/* Ratio Selector after image generated */}
               {layouts && (
                 <div style={{
                   display: 'flex',

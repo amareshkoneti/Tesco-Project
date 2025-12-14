@@ -1,9 +1,16 @@
+// frontend/src/components/ImageUpload.js
+// Component for uploading images with drag-and-drop and preview
+
 import React, { useState } from 'react';
 
+// Props: onImageSelect (function), label (string)
 function ImageUpload({ onImageSelect, label = "Upload Image" }) {
+
+  // State for preview image and drag state
   const [preview, setPreview] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
 
+  // Handle file input change
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -11,6 +18,7 @@ function ImageUpload({ onImageSelect, label = "Upload Image" }) {
     }
   };
 
+  // Handle file drop
   const handleDrop = (e) => {
     e.preventDefault();
     setIsDragging(false);
@@ -20,6 +28,7 @@ function ImageUpload({ onImageSelect, label = "Upload Image" }) {
     }
   };
 
+  // Process selected file: create preview and notify parent
   const processFile = (file) => {
     const reader = new FileReader();
     reader.onloadend = () => {
@@ -29,6 +38,7 @@ function ImageUpload({ onImageSelect, label = "Upload Image" }) {
     onImageSelect(file);
   };
 
+  // Unique ID for file input
   const uniqueId = `file-input-${Math.random().toString(36).substr(2, 9)}`;
 
   return (

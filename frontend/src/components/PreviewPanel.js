@@ -1,9 +1,16 @@
+// frontend/src/components/PreviewPanel.js
+// Component to preview the generated poster and allow downloading as JPG
+
 import React, { useRef, useEffect } from 'react';
 import html2canvas from 'html2canvas';
 
+// Props: layout (object), selectedRatio (string), isGenerating (boolean)
 const PreviewPanel = ({ layout, selectedRatio, isGenerating }) => {
+
+  // Ref for the iframe containing the preview
   const iframeRef = useRef(null);
 
+  // Get dimensions based on selected ratio
   const getDimensions = () => {
     switch (selectedRatio) {
       case '1:1': return { width: 1080, height: 1080 };
@@ -13,6 +20,7 @@ const PreviewPanel = ({ layout, selectedRatio, isGenerating }) => {
     }
   };
 
+  // Calculate preview size and scale
   const dimensions = getDimensions();
   
   // Calculate scale to fit within available space
@@ -25,6 +33,7 @@ const PreviewPanel = ({ layout, selectedRatio, isGenerating }) => {
   const previewWidth = dimensions.width * scale;
   const previewHeight = dimensions.height * scale;
 
+  // Log preview dimensions on ratio change
   useEffect(() => {
     console.log('Preview dimensions:', {
       ratio: selectedRatio,
@@ -34,6 +43,8 @@ const PreviewPanel = ({ layout, selectedRatio, isGenerating }) => {
     });
   }, [selectedRatio]);
 
+
+  // Handle download of the preview as JPG
   const handleDownload = async () => {
     if (!iframeRef.current) return;
 
@@ -43,6 +54,7 @@ const PreviewPanel = ({ layout, selectedRatio, isGenerating }) => {
     await new Promise(res => setTimeout(res, 200));
 
     try {
+      // Generate canvas from iframe content
       const canvas = await html2canvas(iframeDoc.body, {
         width: dimensions.width,
         height: dimensions.height,
@@ -52,6 +64,7 @@ const PreviewPanel = ({ layout, selectedRatio, isGenerating }) => {
         backgroundColor: null
       });
 
+      // Compress to target size (~500KB)
       let quality = 0.9;
       let dataURL = canvas.toDataURL("image/jpeg", quality);
 
@@ -61,6 +74,7 @@ const PreviewPanel = ({ layout, selectedRatio, isGenerating }) => {
         dataURL = canvas.toDataURL("image/jpeg", quality);
       }
 
+      // Trigger download
       const link = document.createElement("a");
       link.download = `poster-${selectedRatio}-${Date.now()}.jpg`;
       link.href = dataURL;
@@ -72,6 +86,7 @@ const PreviewPanel = ({ layout, selectedRatio, isGenerating }) => {
     }
   };
 
+  // Render loading, no preview, or the preview panel
   if (isGenerating) {
     return (
       <div style={{
@@ -108,6 +123,7 @@ const PreviewPanel = ({ layout, selectedRatio, isGenerating }) => {
     );
   }
 
+  // Render no preview available message
   if (!layout || layout.type !== 'html') {
     return (
       <div style={{
@@ -195,6 +211,7 @@ const PreviewPanel = ({ layout, selectedRatio, isGenerating }) => {
         boxShadow: '0 10px 40px rgba(0, 0, 0, 0.15)',
         background: '#FFFFFF'
       }}>
+        {/* Iframe for preview */}
         <iframe
           key={selectedRatio}
           ref={iframeRef}

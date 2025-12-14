@@ -1,3 +1,4 @@
+# Import statements
 import os
 from datetime import datetime
 from flask import Flask, request, jsonify, send_from_directory
@@ -11,7 +12,7 @@ from utils.palette_db import init_palette_db
 from utils.palette_routes import palette_bp
 from utils.palette_db import get_db
 
-
+# Load environment variables
 load_dotenv()
 
 app = Flask(__name__)
@@ -32,6 +33,7 @@ CORS(app, resources={
     }
 })
 
+# Register blueprint for palette routes
 app.register_blueprint(palette_bp)
 
 # Configuration
@@ -44,13 +46,13 @@ os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 # Initialize services
 image_processor = ImageProcessor()
-gemini_service = GeminiService("")
+gemini_service = GeminiService("your-gemini-api-key-here") # Replace with your actual API key
 
+# Helper function to check allowed file extensions
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-product_analysis = {}
-
+# Health check endpoint
 @app.route('/health', methods=['GET'])
 def health_check():
     return jsonify({
@@ -58,6 +60,7 @@ def health_check():
         'gemini_configured': gemini_service.is_configured()
     })
 
+# Image upload endpoint
 @app.route('/api/upload-image', methods=['POST'])
 def upload_image():
     """Handle image upload and background removal"""
@@ -101,6 +104,7 @@ def upload_image():
         traceback.print_exc()
         return jsonify({'error': str(e)}), 500
 
+# Background Image upload endpoint
 @app.route('/api/upload-bg', methods=['POST'])
 def upload_bg():
     """Handle image upload and background removal"""
@@ -136,7 +140,9 @@ def upload_bg():
         import traceback
         traceback.print_exc()
         return jsonify({'error': str(e)}), 500
+    
 
+# Logo upload endpoint with background removal
 @app.route('/api/upload-logo', methods=['POST'])
 def upload_logo():
     """Handle brand logo upload and background removal"""
@@ -181,6 +187,8 @@ def upload_logo():
         traceback.print_exc()
         return jsonify({'error': str(e)}), 500
     
+
+# Image analysis endpoint returning product analysis using Gemini    
 @app.route('/api/analyze-image', methods=['POST'])
 def analyze_image():
     """Use Gemini to analyze product image"""
@@ -212,24 +220,21 @@ def analyze_image():
         traceback.print_exc()
         return jsonify({'error': str(e)}), 500
 
-# app.py (only the generate_layout route and a small surrounding context shown)
+# Main layout generation endpoint
 @app.route('/api/generate-layout', methods=['POST'])
 def generate_layout():
     try:
         data = request.json or {}
         image_filename = data.get('image_filename')
         logo_filename = data.get('logo_filename')
-        # Product analysis may come either as a top-level field or inside form_data
         product_analysis = data.get('product_analysis')
 
-        # Build URLs
+        # Build URLs for images
         image_url = f"http://localhost:5000/uploads/{image_filename}" if image_filename else ""
         logo_url = f"http://localhost:5000/uploads/{logo_filename}" if logo_filename else None
 
-        # Background image (if frontend uploaded background and set filename in form_data.backgroundImage)
-       # Inside /api/generate-layout route
         background_image_filename = (
-            data.get('backgroundImage')# if sent at top level
+            data.get('backgroundImage')
         )
 
         background_image_url = f"http://localhost:5000/uploads/{background_image_filename}" \
@@ -238,6 +243,7 @@ def generate_layout():
         print("Background filename:", background_image_filename)        # ← debug
         print("Background URL:", background_image_url)    
         
+        # Save colour palette to DB with usage count
         conn = get_db()
         conn.execute("""
             INSERT INTO color_palettes
@@ -255,13 +261,14 @@ def generate_layout():
         conn.close()
         print("Saved Colour Palette.")   
         
-        # Canvas sizes
+        # Canvas sizes for different format ratios
         canvas_1 = {'width': 1080, 'height': 1080} 
         canvas_2 = {'width': 1080, 'height': 1920}
         canvas_3 = {'width': 1200, 'height': 628}
 
         print("generating layout with canvas size:", canvas_1)
 
+        # Generating layout for canvas 1 using Gemini
         layout_1= gemini_service.generate_layout(
             canvas=canvas_1,
             form_data=data,
@@ -272,9 +279,11 @@ def generate_layout():
             objects = product_analysis.get("objects", [])
         )        
         print("Layout 1 generated: ", layout_1)
+
+        # Compliance checking for rules mentioned in Appendix A and B
         checker = ComplianceChecker(gemini_service)   # pass your gemini instance so it uses the configured key
 
-        # If you want to run HTML-only compliance (no PNG), do:
+       
         compliance_report = checker.check_html(
             html_content = layout_1['content'],                         # HTML string returned by Gemini layout
             objects = product_analysis.get("objects", []),                      # product detection objects
@@ -286,7 +295,7 @@ def generate_layout():
 
         print("Compliance check", compliance_report)
 
-        # compliance_report expected shape: { "passed": bool, "reason": "...", "details": [...] }
+        # If compliance fails after 1st layout, return error without generating other layouts
         if not compliance_report.get("passed", False):
            
             return jsonify({
@@ -327,6 +336,7 @@ def generate_layout():
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
     
+# Endpoint to serve uploaded files with CORS headers
 @app.route('/uploads/<path:filename>')
 def serve_upload(filename):
     """Serve uploaded files with CORS headers"""
@@ -334,6 +344,7 @@ def serve_upload(filename):
     response.headers['Access-Control-Allow-Origin'] = 'http://localhost:3000'
     return response
 
+# Run the Flask app
 if __name__ == '__main__':
     print("Starting Flask server...")
     print(f"Gemini API configured: {gemini_service.is_configured()}")

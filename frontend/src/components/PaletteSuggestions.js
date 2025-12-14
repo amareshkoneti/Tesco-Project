@@ -1,21 +1,29 @@
+// frontend/src/components/PaletteSuggestions.js
+// Component to suggest frequently used color palettes
+
 import React, { useEffect, useState } from "react";
 import { getFrequentPalettes } from "../services/api";
 
+// Props: onApply (function)
 function PaletteSuggestions({ onApply }) {
+  // State for fetched palettes
   const [palettes, setPalettes] = useState([]);
 
+  // Normalize hex color to #RRGGBB format
   const normalizeHex = (hex) => {
     if (!hex) return "#000000";
       return hex.length === 9 ? hex.slice(0, 7) : hex;
     };
 
 
+  // Fetch frequently used palettes on mount
   useEffect(() => {
     getFrequentPalettes()
       .then(setPalettes)
       .catch(() => {});
   }, []);
 
+  // If no palettes, render nothing
   if (!palettes.length) return null;
 
   return (

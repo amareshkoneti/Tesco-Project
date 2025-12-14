@@ -1,12 +1,13 @@
-import os
+# backend/utils/image_processor.py
+# imports
 from PIL import Image
 from rembg import remove
-import io
 
-
+# ImageProcessor class
 class ImageProcessor:
     """Handle image processing operations"""
     
+    # Remove background from image
     def remove_background(self, input_path, output_path):
         """Remove background from image using rembg"""
         try:
@@ -29,6 +30,7 @@ class ImageProcessor:
             img.save(output_path, 'PNG')
             return False
     
+    # Get image information like dimensions and suggested scale
     def get_image_info(self, image_path):
         """Get image dimensions and basic info"""
         try:
