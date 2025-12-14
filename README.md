@@ -2,10 +2,6 @@
 
 <div align="center">
 
-![Project Banner](https://img.shields.io/badge/AI-Powered-blue?style=for-the-badge)
-![Hackathon](https://img.shields.io/badge/National%20Level-Hackathon-red?style=for-the-badge)
-![Status](https://img.shields.io/badge/Status-Active-success?style=for-the-badge)
-
 **Revolutionizing Retail Media Creative Production with Generative AI**
 
 [Demo](#-demo) • [Features](#-key-features) • [Installation](#-installation--setup) • [Tech Stack](#-tech-stack) • [Team](#-team)
@@ -26,8 +22,6 @@
 - [Project Structure](#-project-structure)
 - [Usage Guide](#-usage-guide)
 - [Demo](#-demo)
-- [API Documentation](#-api-documentation)
-- [Compliance Engine](#-compliance-engine)
 - [Future Enhancements](#-future-enhancements)
 - [Team](#-team)
 - [License](#-license)
@@ -315,23 +309,11 @@ Tesco-Project/
 - Background removal is applied automatically
 
 ### 2. **Design Your Creative**
-- Use drag-and-drop to position elements
-- Add text, adjust colors, and apply layouts
+- Add text, adjust colors.
 - Choose from suggested color palettes
-- Select aspect ratio (1:1, 16:9, 1.9:1)
+- Generate your Create Automatically in 3 different formats
 
-### 3. **AI Assistance**
-- Click "AI Suggest Layout" for intelligent design recommendations
-- Review AI-generated content improvements
-- Apply or modify suggestions as needed
-
-### 4. **Compliance Check**
-- Click "Check Compliance" to validate your creative
-- Review detailed pass/fail reports for all guidelines
-- Fix any violations highlighted by the system
-- Re-check until all rules pass
-
-### 5. **Export**
+### 3. **Export**
 - Click "Export Creative" to generate final assets
 - Choose format (PNG, JPG, PDF)
 - Download campaign-ready files (<500KB)
@@ -362,120 +344,6 @@ Tesco-Project/
 ##### Aspect Ratio 1.9:1
 ![Generated Poster - Aspect 3](#)
 *In-store point-of-sale display*
-
----
-
-## 📡 API Documentation
-
-### Base URL
-```
-http://localhost:5000/api
-```
-
-### Endpoints
-
-#### 1. Upload Image
-```http
-POST /upload
-Content-Type: multipart/form-data
-
-Body:
-- image: File
-
-Response:
-{
-  "success": true,
-  "image_url": "/uploads/filename.jpg",
-  "analysis": { ... }
-}
-```
-
-#### 2. Check Compliance
-```http
-POST /compliance/check
-Content-Type: application/json
-
-Body:
-{
-  "creative_data": { ... },
-  "retailer": "tesco"
-}
-
-Response:
-{
-  "passed": true,
-  "violations": [],
-  "suggestions": []
-}
-```
-
-#### 3. Get Color Palette
-```http
-POST /palette/extract
-Content-Type: application/json
-
-Body:
-{
-  "image_url": "/uploads/filename.jpg"
-}
-
-Response:
-{
-  "colors": ["#FF5733", "#33FF57", ...],
-  "dominant_color": "#FF5733"
-}
-```
-
-#### 4. AI Layout Suggestion
-```http
-POST /ai/suggest-layout
-Content-Type: application/json
-
-Body:
-{
-  "elements": [ ... ],
-  "aspect_ratio": "1:1"
-}
-
-Response:
-{
-  "layout": { ... },
-  "reasoning": "..."
-}
-```
-
----
-
-## 🛡️ Compliance Engine
-
-### Appendix A: Retailer Guidelines
-
-Our compliance engine validates against:
-
-- **Logo Placement Rules**: Proper positioning and sizing of retailer logos
-- **Pricing Display**: Correct format, decimal places, currency symbols
-- **Accessibility Standards**: Color contrast ratios (WCAG AA/AAA)
-- **Text Readability**: Minimum font sizes, spacing requirements
-- **Prohibited Content**: Filters for disallowed words or themes
-- **Alcohol Regulations**: Age-gate requirements, responsible messaging
-
-### Appendix B: Brand Identity Guidelines
-
-- **Color Palette Compliance**: Validation against approved brand colors
-- **Typography Rules**: Font families, sizes, weights
-- **Logo Usage**: Clear space, minimum size, prohibited modifications
-- **Tone of Voice**: Content analysis for brand consistency
-- **Image Quality**: Resolution, aspect ratio, file size checks
-
-### Validation Process
-
-```
-1. Parse Creative Elements
-2. Apply Rule Set (Appendix A + B)
-3. Generate Detailed Report
-4. Provide Actionable Suggestions
-5. Re-validate After Changes
-```
 
 ---
 
@@ -512,56 +380,41 @@ Our compliance engine validates against:
 <table>
   <tr>
     <td align="center">
-      <img src="#" width="150px;" alt="Veerla Sailaja"/>
       <br />
       <sub><b>Veerla Sailaja</b></sub>
       <br />
-      <sub>Team Leader</sub>
+      <sub>Team Leader, AIML Engineer</sub>
       <br />
-      <a href="https://github.com/#">GitHub</a> •
-      <a href="https://linkedin.com/in/#">LinkedIn</a>
     </td>
     <td align="center">
-      <img src="#" width="150px;" alt="Amaresh Koneti"/>
       <br />
       <sub><b>Amaresh Koneti</b></sub>
       <br />
       <sub>Backend Developer</sub>
       <br />
-      <a href="https://github.com/amareshkoneti">GitHub</a> •
-      <a href="https://linkedin.com/in/#">LinkedIn</a>
     </td>
     <td align="center">
-      <img src="#" width="150px;" alt="Pedamallu Umesh Gupta"/>
       <br />
       <sub><b>Pedamallu Umesh Gupta</b></sub>
       <br />
       <sub>Frontend Developer</sub>
       <br />
-      <a href="https://github.com/#">GitHub</a> •
-      <a href="https://linkedin.com/in/#">LinkedIn</a>
     </td>
   </tr>
   <tr>
     <td align="center">
-      <img src="#" width="150px;" alt="Karthik Pasupuleti"/>
       <br />
       <sub><b>Karthik Pasupuleti</b></sub>
       <br />
-      <sub>AI/ML Engineer</sub>
+      <sub>Frontend Developer</sub>
       <br />
-      <a href="https://github.com/#">GitHub</a> •
-      <a href="https://linkedin.com/in/#">LinkedIn</a>
     </td>
     <td align="center">
-      <img src="#" width="150px;" alt="Jaswanth Krishna Perla"/>
       <br />
       <sub><b>Jaswanth Krishna Perla</b></sub>
       <br />
       <sub>Full Stack Developer</sub>
       <br />
-      <a href="https://github.com/#">GitHub</a> •
-      <a href="https://linkedin.com/in/#">LinkedIn</a>
     </td>
   </tr>
 </table>
@@ -587,15 +440,14 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 
 For questions, suggestions, or collaboration opportunities:
 
-- **Email**: [team@example.com](mailto:team@example.com)
+- **Email**: [veerlasailajayadav@gmail.com](mailto:veerlasailajayadav@gmail.com)
 - **Project Repository**: [GitHub](https://github.com/amareshkoneti/Tesco-Project)
-- **Issues**: [Report a Bug](https://github.com/amareshkoneti/Tesco-Project/issues)
 
 ---
 
 <div align="center">
 
-**Made with ❤️ by Team Innovators**
+**Made with ❤️ by Team**
 
 ⭐ Star this repository if you find it helpful!
 
