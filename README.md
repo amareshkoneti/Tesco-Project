@@ -72,17 +72,7 @@ Businesses relying on **retail media networks** face significant obstacles:
 
 ### Intelligent Creative Automation Platform
 
-Our platform leverages **Google Gemini AI** and advanced computer vision to provide:
-
-- **📊 Smart Analysis**: Pack shot detection, background removal.
-- **🤖 Pack shot Object Detection**: Identification of Objects in uploaded images
-- **🎨 Color Pallete Suggestion**: Stores and Suggests the frequent color palettes
-- **🤖 AI-Assisted Design**: Intelligent layout Design and Generation
-- **✓ Real-Time Compliance**: Automated validation against Appendix A & B guidelines
-- **🎨 Mulit-format Posters**: Automatically Generates Creatives in Different aspect ratios
-- **⚡ Instant Export**: Campaign-ready assets (<150KB) in seconds
-
----
+Our platform leverages **Google Gemini AI** and advanced computer vision to provide following key features:
 
 ## ✨ Key Features
 
