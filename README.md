@@ -137,7 +137,7 @@ Our platform leverages **Google Gemini AI** and advanced computer vision to prov
 *In-store point-of-sale display*
 
 ### 🏗️ System Architecture
-![System Architecture](assets/System Architecture.png)
+![System Architecture](/assets/System Architecture.png)
 *In-store point-of-sale display*
 
 ---
