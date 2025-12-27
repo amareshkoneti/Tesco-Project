@@ -74,11 +74,13 @@ Businesses relying on **retail media networks** face significant obstacles:
 
 Our platform leverages **Google Gemini AI** and advanced computer vision to provide:
 
-- **🤖 AI-Assisted Design**: Intelligent layout suggestions and content optimization
+- **📊 Smart Analysis**: Pack shot detection, background removal.
+- **🤖 Pack shot Object Detection**: Identification of Objects in uploaded images
+- **🎨 Color Pallete Suggestion**: Stores and Suggests the frequent color palettes
+- **🤖 AI-Assisted Design**: Intelligent layout Design and Generation
 - **✓ Real-Time Compliance**: Automated validation against Appendix A & B guidelines
-- **🎨 Visual Editing**: Intuitive drag-and-drop interface for creative control
-- **📊 Smart Analysis**: Pack shot detection, background removal, color palette extraction
-- **⚡ Instant Export**: Campaign-ready assets (<500KB) in seconds
+- **🎨 Mulit-format Posters**: Automatically Generates Creatives in Different aspect ratios
+- **⚡ Instant Export**: Campaign-ready assets (<150KB) in seconds
 
 ---
 
@@ -106,6 +108,7 @@ Our platform leverages **Google Gemini AI** and advanced computer vision to prov
 - **Automated Rule Checking**: Validates against all Appendix A & B requirements
 - **Detailed Reports**: Pass/fail explanations for every guideline
 - **Retailer-Specific Rules**: Logo placement, pricing display, accessibility standards
+- **Mismatch-Detection**: Can intelligently identify the mismatch between objects in packshot and Head line/subhead line
 
 ### 📐 **Multi-Format Support**
 - **1:1** - Social media posts (Instagram, Facebook)
@@ -114,7 +117,7 @@ Our platform leverages **Google Gemini AI** and advanced computer vision to prov
 - Automatically Generates 3 formats at once, Based on choosen ratio automatically resizes the preview panel.
 
 ### 📦 **Export & Integration**
-- Campaign-ready assets (<500KB)
+- Campaign-ready assets (<150KB)
 
 ---
 
