@@ -111,36 +111,76 @@ Our platform leverages **Google Gemini AI** and advanced computer vision to prov
 
 ---
 
-## 🏗️ System Architecture
+## 🎬 Demo
+
+### Demo Video
+🎥 **[Watch Full Demo Video](#)** *(Add your demo video link here)*
+
+### Screenshots
+
+#### Main Interface
+![Complete Project UI](#)
+*Intuitive creative builder interface with drag-and-drop functionality*
+
+#### Generated Creatives
+
+##### Aspect Ratio 1:1
+![Generated Poster - Aspect 1](#)
+*Social media ready creative (Instagram/Facebook)*
+
+##### Aspect Ratio 16:9
+![Generated Poster - Aspect 2](#)
+*Online display ad format*
+
+##### Aspect Ratio 1.9:1
+![Generated Poster - Aspect 3](#)
+*In-store point-of-sale display*
+
+### 🏗️ System Architecture
+![System Architecture](assets/System Architecture.png)
+*In-store point-of-sale display*
+
+---
+## 📁 Project Structure
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                        Frontend (React)                      │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐   │
-│  │  Design  │  │Compliance│  │ Preview  │  │  Export  │   │
-│  │ Controls │  │  Panel   │  │  Panel   │  │  Panel   │   │
-│  └──────────┘  └──────────┘  └──────────┘  └──────────┘   │
-└─────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────┐
-│                     Backend API (Flask)                      │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐     │
-│  │  Image       │  │  Compliance  │  │   Palette    │     │
-│  │  Processor   │  │   Checker    │  │   Manager    │     │
-│  └──────────────┘  └──────────────┘  └──────────────┘     │
-└─────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────┐
-│                  AI Services & Database                      │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐     │
-│  │   Gemini     │  │   OpenCV     │  │   SQLite     │     │
-│  │     API      │  │   Vision     │  │   Database   │     │
-│  └──────────────┘  └──────────────┘  └──────────────┘     │
-└─────────────────────────────────────────────────────────────┘
+Tesco-Project/
+│
+├── backend/
+│   ├── uploads/                    # Uploaded asset storage
+│   ├── utils/                      # Utility modules
+│   │   ├── __pycache__/
+│   │   ├── __init__.py
+│   │   ├── compliance_checker.py  # Compliance validation logic
+│   │   ├── gemini_service.py      # Gemini API integration
+│   │   ├── image_processor.py     # Image processing functions
+│   │   ├── palette_db.py          # Color palette database
+│   │   └── palette_routes.py      # Palette API endpoints
+│   ├── .env                        # Environment variables
+│   ├── app.py                      # Main Flask application
+│   ├── palettes.db                 # SQLite database
+│   └── requirements.txt            # Python dependencies
+│
+├── frontend/
+│   ├── node_modules/               # Node.js packages
+│   ├── public/                     # Static assets
+│   ├── src/
+│   │   ├── components/             # React components
+│   │   │   ├── CompliancePanel.js # Compliance checking UI
+│   │   │   ├── ContentForm.js     # Content input form
+│   │   │   ├── DesignControls.js  # Design editing controls
+│   │   │   ├── ImageUpload.js     # Image upload interface
+│   │   │   ├── PaletteSuggestions.js # Color palette UI
+│   │   │   └── PreviewPanel.js    # Creative preview
+│   │   ├── services/
+│   │   │   └── api.js              # API service layer
+│   │   ├── App.css                 # Main stylesheet
+│   │   └── App.js                  # Root React component
+│   ├── package.json                # npm dependencies
+│   └── package-lock.json
+│
+└── README.md                        # This file
 ```
-
 ---
 
 ## 🧰 Tech Stack
@@ -251,49 +291,6 @@ npm start
 
 ---
 
-## 📁 Project Structure
-
-```
-Tesco-Project/
-│
-├── backend/
-│   ├── uploads/                    # Uploaded asset storage
-│   ├── utils/                      # Utility modules
-│   │   ├── __pycache__/
-│   │   ├── __init__.py
-│   │   ├── compliance_checker.py  # Compliance validation logic
-│   │   ├── gemini_service.py      # Gemini API integration
-│   │   ├── image_processor.py     # Image processing functions
-│   │   ├── palette_db.py          # Color palette database
-│   │   └── palette_routes.py      # Palette API endpoints
-│   ├── .env                        # Environment variables
-│   ├── app.py                      # Main Flask application
-│   ├── palettes.db                 # SQLite database
-│   └── requirements.txt            # Python dependencies
-│
-├── frontend/
-│   ├── node_modules/               # Node.js packages
-│   ├── public/                     # Static assets
-│   ├── src/
-│   │   ├── components/             # React components
-│   │   │   ├── CompliancePanel.js # Compliance checking UI
-│   │   │   ├── ContentForm.js     # Content input form
-│   │   │   ├── DesignControls.js  # Design editing controls
-│   │   │   ├── ImageUpload.js     # Image upload interface
-│   │   │   ├── PaletteSuggestions.js # Color palette UI
-│   │   │   └── PreviewPanel.js    # Creative preview
-│   │   ├── services/
-│   │   │   └── api.js              # API service layer
-│   │   ├── App.css                 # Main stylesheet
-│   │   └── App.js                  # Root React component
-│   ├── package.json                # npm dependencies
-│   └── package-lock.json
-│
-└── README.md                        # This file
-```
-
----
-
 ## 📖 Usage Guide
 
 ### 1. **Upload Assets**
@@ -310,61 +307,6 @@ Tesco-Project/
 - Click "Export Creative" to generate final assets
 - Choose format (PNG, JPG, PDF)
 - Download campaign-ready files (<500KB)
-
----
-
-## 🎬 Demo
-
-### Demo Video
-🎥 **[Watch Full Demo Video](#)** *(Add your demo video link here)*
-
-### Screenshots
-
-#### Main Interface
-![Complete Project UI](#)
-*Intuitive creative builder interface with drag-and-drop functionality*
-
-#### Generated Creatives
-
-##### Aspect Ratio 1:1
-![Generated Poster - Aspect 1](#)
-*Social media ready creative (Instagram/Facebook)*
-
-##### Aspect Ratio 16:9
-![Generated Poster - Aspect 2](#)
-*Online display ad format*
-
-##### Aspect Ratio 1.9:1
-![Generated Poster - Aspect 3](#)
-*In-store point-of-sale display*
-
----
-
-## 🔮 Future Enhancements
-
-### Phase 1: Enhanced AI Capabilities
-- [ ] Multi-language support with auto-translation
-- [ ] Video creative generation
-- [ ] Animated banner support
-- [ ] Voice-over integration
-
-### Phase 2: Advanced Features
-- [ ] A/B testing automation
-- [ ] Performance prediction (CTR, engagement)
-- [ ] Dynamic personalization
-- [ ] Bulk creative generation
-
-### Phase 3: Integration & Scalability
-- [ ] Direct platform publishing (Meta, Google Ads)
-- [ ] Collaboration features (team workspaces)
-- [ ] Version control and approval workflows
-- [ ] Advanced analytics dashboard
-
-### Phase 4: Ecosystem Expansion
-- [ ] Plugin marketplace
-- [ ] Custom compliance rule builder
-- [ ] White-label solutions
-- [ ] Enterprise SSO integration
 
 ---
 
@@ -414,13 +356,7 @@ Tesco-Project/
 
 ---
 
-## 📄 License
-
-This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
-
----
-
-## 🙏 Acknowledgments
+## Acknowledgments
 
 - **Google Gemini** for providing cutting-edge AI capabilities
 - **Tesco** for inspiration in retail media guidelines
