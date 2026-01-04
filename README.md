@@ -119,22 +119,14 @@ Our platform leverages **Google Gemini AI** and advanced computer vision to prov
 ### Screenshots
 
 #### Main Interface
-![Complete Project UI](#)
+![Complete Project UI](https://raw.githubusercontent.com/amareshkoneti/Tesco-Project/refs/heads/master/assets/main_page.png)
 *Intuitive creative builder interface with drag-and-drop functionality*
 
 #### Generated Creatives
 
-##### Aspect Ratio 1:1
-![Generated Poster - Aspect 1](#)
+##### Sample Creative for Aspect Ratio 1:1
+![Generated Poster - Aspect 1](https://raw.githubusercontent.com/amareshkoneti/Tesco-Project/refs/heads/master/assets/1_1_poster.jpg)
 *Social media ready creative (Instagram/Facebook)*
-
-##### Aspect Ratio 16:9
-![Generated Poster - Aspect 2](#)
-*Online display ad format*
-
-##### Aspect Ratio 1.9:1
-![Generated Poster - Aspect 3](#)
-*In-store point-of-sale display*
 
 ### 🏗️ System Architecture
 ![System Architecture](https://raw.githubusercontent.com/amareshkoneti/Tesco-Project/refs/heads/master/assets/System%20Architecture.png)
