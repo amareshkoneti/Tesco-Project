@@ -18,8 +18,10 @@ load_dotenv()
 app = Flask(__name__)
 CORS(
     app,
-    resources={r"/api/*": {"origins": "https://tesco-frontend.vercel.app"}},
-    supports_credentials=True
+    origins=["https://tesco-frontend.vercel.app"],
+    supports_credentials=True,
+    allow_headers=["Content-Type", "Authorization"],
+    methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"]
 )
 init_palette_db()
 
