@@ -46,7 +46,7 @@ os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 # Initialize services
 image_processor = ImageProcessor()
-gemini_service = GeminiService("AIzaSyAOuCjr31wzH_2dJ3xedA-9gxIqg40LqA4") # Replace with your actual API key
+gemini_service = GeminiService(os.getenv('GEMINI_API_KEY')) # Replace with your actual API key
 
 # Helper function to check allowed file extensions
 def allowed_file(filename):
