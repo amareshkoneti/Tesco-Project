@@ -16,13 +16,7 @@ from utils.palette_db import get_db
 load_dotenv()
 
 app = Flask(__name__)
-CORS(
-    app,
-    origins=["https://tesco-frontend.vercel.app"],
-    supports_credentials=True,
-    allow_headers=["Content-Type", "Authorization"],
-    methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"]
-)
+CORS(app)
 init_palette_db()
 
 
