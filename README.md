@@ -304,6 +304,7 @@ npm start
 
 ## 👥 Team
 
+# All the team members resumes are in the directory '.resumes/'. please find the resumes there.
 <table>
   <tr>
     <td align="center">
