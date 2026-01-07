@@ -114,7 +114,7 @@ Our platform leverages **Google Gemini AI** and advanced computer vision to prov
 ## 🎬 Demo
 
 ### Demo Video
-🎥 **[Watch Full Demo Video](#)** *(Add your demo video link here)*
+🎥 **[Watch Full Demo Video](https://youtu.be/rUtkFEZkfW8?si=X9Qk0aeajSrPdH61)**
 
 ### Screenshots
 

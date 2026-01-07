@@ -147,7 +147,7 @@ class GeminiService:
 
                 3. LAYOUT:
                 - Headline & Subheadline: Bold, high-contrast, min 20px font (use Google Fonts: Bebas Neue or Montserrat).
-                - Packshot: Large central (~60% area), lead product.
+                - Packshot: Large central (~60% area), lead product and centered according to the aspect ratio.
                 - Logo: Top-right if present, good size, no overlap.
                 - For 9:16 formats (1080x1920): Keep top 200px and bottom 250px free of text/logos/value tiles.
                 - Background: Follow background instruction creatively (gradients, textures, overlays for legibility) but keep base color/image visible.

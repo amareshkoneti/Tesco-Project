@@ -48,7 +48,7 @@ os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 # Initialize services
 image_processor = ImageProcessor()
 print(os.getenv('GEMINI_API_KEY'))
-gemini_service = GeminiService(os.getenv('GEMINI_API_KEY')) # Replace with your actual API key
+gemini_service = GeminiService("AIzaSyAbppzDggJKgrchvaKoyMH3owPtE4GDUlU") # Replace with your actual API key
 
 # Helper function to check allowed file extensions
 def allowed_file(filename):
@@ -350,4 +350,4 @@ def serve_upload(filename):
 if __name__ == '__main__':
     print("Starting Flask server...")
     print(f"Gemini API configured: {gemini_service.is_configured()}")
-    app.run(debug=True, port=5000, host='0.0.0.0')
+    app.run(debug=False, port=5000, host='0.0.0.0')
